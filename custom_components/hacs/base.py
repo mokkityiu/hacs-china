@@ -582,7 +582,32 @@ class HacsBase:
 
         self.log.debug("Downloading %s", url)
 
+        mirrors = {
+            "ghproxy": {
+                "raw": "https://ghproxy.com/raw.githubusercontent.com",
+                "archive": "https://ghproxy.com/github.com",
+                "release": "https://ghproxy.com/github.com",
+            },
+            "fastgit": {
+                "raw": "https://raw.fastgit.org",
+                "archive": "https://hub.fastgit.org",
+                "release": "https://hub.fastgit.org",
+            },
+        }
+
         while tries_left > 0:
+
+            mirror = mirrors["ghproxy"]
+            if tries_left <= 2:
+                mirror = mirrors["fastgit"]
+
+            if "releases/download/" in url:
+                url = url.replace("https://github.com/", f"{mirror['release']}/")
+            elif "archive/refs/" in url:
+                url = url.replace("https://github.com/", f"{mirror['archive']}/")
+            else:
+                url = url.replace("https://raw.githubusercontent.com/", f"{mirror['raw']}/")
+
             try:
                 request = await self.session.get(url=url, timeout=ClientTimeout(total=60))
 
