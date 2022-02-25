@@ -582,6 +582,7 @@ class HacsBase:
 
         self.log.debug("Downloading %s", url)
 
+        url = url.replace("//github.com/hacs/integration", "//github.com/hacs-china/integration")
         mirrors = {
             "ghproxy": {
                 "raw": "https://ghproxy.com/raw.githubusercontent.com",
