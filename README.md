@@ -18,7 +18,7 @@ wget -O - https://cdn.jsdelivr.net/gh/hasscc/get/get | DOMAIN=hacs REPO_PATH=hac
 
 ### 手动安装
 
-- [下载](https://github.com/hacs-china/integration/archive/refs/heads/china.zip)安装包并解压
+- [下载](https://github.com/hacs-china/integration/releases/latest/download/hacs.zip)安装包并解压
 - 通过samba/ftp复制解压出来的`custom_components`文件夹到你的HA配置目录
 - 重启HA
 - [添加HACS集成](https://my.home-assistant.io/redirect/config_flow_start/?domain=hacs)(仅首次安装)
