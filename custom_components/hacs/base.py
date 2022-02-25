@@ -575,32 +575,43 @@ class HacsBase:
         if url is None:
             return None
 
-        tries_left = 5
+        tries_left = 6
 
         if "tags/" in url:
             url = url.replace("tags/", "")
 
-        self.log.debug("Downloading %s", url)
-
         url = url.replace("//github.com/hacs/integration", "//github.com/hacs-china/integration")
+
         mirrors = {
+            # https://ghproxy.com
             "ghproxy": {
                 "raw": "https://ghproxy.com/raw.githubusercontent.com",
                 "archive": "https://ghproxy.com/github.com",
                 "release": "https://ghproxy.com/github.com",
             },
+
+            # https://mirror.ghproxy.com
+            "ghproxy2": {
+                "raw": "https://mirror.ghproxy.com/raw.githubusercontent.com",
+                "archive": "https://mirror.ghproxy.com/github.com",
+                "release": "https://mirror.ghproxy.com/github.com",
+            },
+
+            # https://doc.fastgit.org/zh-cn/node.html
             "fastgit": {
                 "raw": "https://raw.fastgit.org",
-                "archive": "https://hub.fastgit.org",
-                "release": "https://hub.fastgit.org",
+                "archive": "https://hub.fastgit.xyz",
+                "release": "https://hub.fastgit.xyz",
             },
         }
 
         while tries_left > 0:
 
             mirror = mirrors["ghproxy"]
-            if tries_left <= 2:
+            if tries_left <= 4:
                 mirror = mirrors["fastgit"]
+            if tries_left <= 2:
+                mirror = mirrors["ghproxy2"]
 
             if "releases/download/" in url:
                 url = url.replace("https://github.com/", f"{mirror['release']}/")
@@ -608,6 +619,8 @@ class HacsBase:
                 url = url.replace("https://github.com/", f"{mirror['archive']}/")
             else:
                 url = url.replace("https://raw.githubusercontent.com/", f"{mirror['raw']}/")
+
+            self.log.debug("Downloading %s", url)
 
             try:
                 request = await self.session.get(url=url, timeout=ClientTimeout(total=60))
