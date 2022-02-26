@@ -1,25 +1,28 @@
 # HACS 极速版 
 
 [HACS](https://hacs.xyz)是一款优秀的 [Home Assistant](https://www.home-assistant.io) 集成商店，然而国人想要使用它下载插件或前端卡片却困难重重，主要原因就是国内的网络环境。
-本项目使用了[ghproxy.com](https://ghproxy.com)和[fastgit.org](https://fastgit.org)提供的GitHub镜像服务，可以让大家更快的下载商店里的插件。
+本项目使用了[ghproxy.com](https://ghproxy.com)和[fastgit.org](https://fastgit.org)提供的Github镜像服务，可以让大家更快的下载商店里的插件。
 
 ## 安装
 
-> 本项目为HACS官方集成的修改版，安装本项目版本会覆盖官方的集成，但是无需重新配置集成(共用一套配置)，因此你可以放心安装。如果想切换到官方版本，使用官方的shell命令再安装即可。
+> 本项目是HACS官方集成的修改版，安装本项目版本会覆盖官方的集成，但是无需重新配置集成(共用一套配置)，因此你可以放心安装。如果想切换到官方版本，使用官方的shell命令再安装即可。
 
-### 使用命令行安装
+### 使用命令行安装(推荐)
 
 ```bash
-wget -O - https://cdn.jsdelivr.net/gh/hasscc/get/get | DOMAIN=hacs REPO_PATH=hacs-china/integration ARCHIVE_TAG=china bash -
+wget -O - https://cdn.jsdelivr.net/gh/hasscc/get@main/get | DOMAIN=hacs REPO_PATH=hacs-china/integration ARCHIVE_TAG=china bash -
 ```
 
-- 如果是hassos/hassio/supervisor版本的HA，可直接在宿主机或`Terminal & SSH`加载项中执行上面的命令
-- 如果是core/docker版本的HA，需要ssh登陆宿主机后，进入到HA配置目录执行
+- 如果是haos/hassio/supervisor版本的HA，可直接在宿主机或`Terminal & SSH`加载项中执行上面的命令
+- 如果是core/docker版本的HA，需要ssh登陆宿主机后，并cd进入到HA配置目录再执行安装命令
 
 ### 手动安装
 
-- [下载](https://github.com/hacs-china/integration/releases/latest/download/hacs.zip)安装包并解压
-- 通过samba/ftp复制解压出来的`custom_components`文件夹到你的HA配置目录
+- [点击这里下载](https://github.com/hacs-china/integration/releases/latest/download/hacs.zip)安装包并解压
+- 通过samba/ftp进入HA配置目录
+- 在HA配置目录下创建`custom_components`文件夹(如果已有请忽略)
+- 在`custom_components`目录下创建`hacs`文件夹(如果已有请删除重新创建)
+- 將解压出来的hacs文件复制到刚创建的`hacs`文件夹
 - 重启HA
 - [添加HACS集成](https://my.home-assistant.io/redirect/config_flow_start/?domain=hacs)(仅首次安装)
 
