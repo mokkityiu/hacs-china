@@ -7,7 +7,7 @@ class HacsGitHubRepo(str, Enum):
     """HacsGitHubRepo."""
 
     DEFAULT = "hacs/default"
-    INTEGRATION = "hacs/integration"
+    INTEGRATION = "hacs-china/integration"
 
 
 class HacsCategory(str, Enum):
