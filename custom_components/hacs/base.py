@@ -575,13 +575,6 @@ class HacsBase:
         if url is None:
             return None
 
-        tries_left = 6
-
-        if "tags/" in url:
-            url = url.replace("tags/", "")
-
-        url = url.replace("//github.com/hacs/integration", "//github.com/hacs-china/integration")
-
         mirrors = {
             # https://ghproxy.com
             "ghproxy": {
@@ -605,13 +598,19 @@ class HacsBase:
             },
         }
 
+        tries_keys = list(mirrors.keys())
+        tries_left = len(tries_keys) * 2
+
+        if "tags/" in url:
+            url = url.replace("tags/", "")
+
+        src = url.replace("//github.com/hacs/integration", "//github.com/hacs-china/integration")
+        from math import ceil
+
         while tries_left > 0:
 
-            mirror = mirrors["ghproxy"]
-            if tries_left <= 4:
-                mirror = mirrors["fastgit"]
-            if tries_left <= 2:
-                mirror = mirrors["ghproxy2"]
+            url = src
+            mirror = mirrors[tries_keys[0 - ceil(tries_left / 2)]]
 
             if "releases/download/" in url:
                 url = url.replace("https://github.com/", f"{mirror['release']}/")
