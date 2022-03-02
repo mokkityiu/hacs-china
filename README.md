@@ -33,6 +33,11 @@ wget -O - https://cdn.jsdelivr.net/gh/hasscc/get@main/get | HUB_DOMAIN=ghproxy.c
 - [添加HACS集成](https://my.home-assistant.io/redirect/config_flow_start/?domain=hacs) (仅首次安装)
 
 
+### 常见问题
+
+- [极速版和官方HACS的差别有那些？](https://github.com/hacs-china/integration/compare/main...china)
+
+
 ------
 
 
