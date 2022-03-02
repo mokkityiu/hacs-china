@@ -13,18 +13,24 @@
 wget -O - https://cdn.jsdelivr.net/gh/hasscc/get@main/get | DOMAIN=hacs REPO_PATH=hacs-china/integration ARCHIVE_TAG=china bash -
 ```
 
+> 如果上面的命令执行后卡住不动，或没有提示安装成功，请尝试下面的命令
+
+```bash
+wget -O - https://cdn.jsdelivr.net/gh/hasscc/get@main/get | HUB_DOMAIN=ghproxy.com/github.com DOMAIN=hacs REPO_PATH=hacs-china/integration ARCHIVE_TAG=china bash -
+```
+
 - 如果是haos/hassio/supervisor版本的HA，可直接在宿主机或`Terminal & SSH`加载项中执行上面的命令
 - 如果是core/docker版本的HA，需要ssh登陆宿主机后，并cd进入到HA配置目录再执行安装命令
 
 ### 手动安装
 
-- [点击这里下载](https://github.com/hacs-china/integration/releases/latest/download/hacs.zip)安装包并解压
+- [点击这里下载](https://github.com/hacs-china/integration/releases/latest/download/hacs.zip)安装包并解压 (如果下载不了请点[这里](https://ghproxy.com/github.com/hacs-china/integration/releases/latest/download/hacs.zip)或[这里](https://hub.fastgit.xyz/hacs-china/integration/releases/latest/download/hacs.zip))
 - 通过samba/ftp进入HA配置目录
-- 在HA配置目录下创建`custom_components`文件夹(如果已有请忽略)
-- 在`custom_components`目录下创建`hacs`文件夹(如果已有请删除重新创建)
+- 在HA配置目录下创建`custom_components`文件夹 (如果已有请忽略)
+- 在`custom_components`目录下创建`hacs`文件夹 (如果已有请删除重新创建)
 - 將解压出来的hacs文件复制到刚创建的`hacs`文件夹
 - 重启HA
-- [添加HACS集成](https://my.home-assistant.io/redirect/config_flow_start/?domain=hacs)(仅首次安装)
+- [添加HACS集成](https://my.home-assistant.io/redirect/config_flow_start/?domain=hacs) (仅首次安装)
 
 
 ------
