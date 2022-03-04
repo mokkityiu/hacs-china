@@ -1,4 +1,8 @@
-# HACS 极速版 
+# HACS 极速版
+
+[![version](https://img.shields.io/github/v/release/hacs-china/integration)](https://github.com/hacs-china/integration/releases/latest?include_prereleases)
+[![releases](https://img.shields.io/github/downloads/hacs-china/integration/total)](https://github.com/hacs-china/integration/releases)
+[![stars](https://img.shields.io/github/stars/hacs-china/integration)](https://github.com/hacs-china/integration/stargazers)
 
 [HACS](https://hacs.xyz)是一款优秀的 [Home Assistant](https://www.home-assistant.io) 集成商店，然而国人想要使用它下载插件或前端卡片却困难重重，主要原因就是国内的网络环境。
 本项目使用了[ghproxy.com](https://ghproxy.com)和[fastgit.org](https://fastgit.org)提供的Github镜像服务，可以让大家更快的下载商店里的插件。
