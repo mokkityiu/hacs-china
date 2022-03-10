@@ -29,12 +29,19 @@ wget -O - https://cdn.jsdelivr.net/gh/hasscc/get@main/get | HUB_DOMAIN=ghproxy.c
 ### 手动安装
 
 - [点击这里下载](https://github.com/hacs-china/integration/releases/latest/download/hacs.zip)安装包并解压 (如果下载不了请点[这里](https://ghproxy.com/github.com/hacs-china/integration/releases/latest/download/hacs.zip)或[这里](https://hub.fastgit.xyz/hacs-china/integration/releases/latest/download/hacs.zip))
-- 通过samba/ftp进入HA配置目录
+- 通过samba/ftp进入HA配置目录，通常为以下目录：
+  - `/usr/share/hassio/homeassistant` haos/hassio宿主机
+  - `/config` haos/hassio的`Samba`或`Terminal & SSH`加载项
+  - `$HOME/.homeassistant` 以core方式安装的HA默认配置目录
+  - docker安装的HA为`-v`参数后面映射的目录
 - 在HA配置目录下创建`custom_components`文件夹 (如果已有请忽略)
 - 在`custom_components`目录下创建`hacs`文件夹 (如果已有请删除重新创建)
 - 將解压出来的hacs文件复制到刚创建的`hacs`文件夹
 - 重启HA
 - [添加HACS集成](https://my.home-assistant.io/redirect/config_flow_start/?domain=hacs) (仅首次安装)
+
+> ⚠️ 请不要通过下图中的位置下载HACS，会缺少文件
+> ![download hacs](https://user-images.githubusercontent.com/4549099/157629602-422a7bbe-7588-4a81-803e-b295491d78fe.png)
 
 
 ### 常见问题
