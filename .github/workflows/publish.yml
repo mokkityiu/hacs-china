@@ -2,36 +2,41 @@ name: Publish
 
 on:
   release:
-    types: [published]
+    types:
+      - published
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   release_zip_file:
     name: Publish HACS zip file asset
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
+      - name: 📥 Checkout the repository
+        uses: actions/checkout@v3.0.0
 
-      - name: Set up Python
-        uses: actions/setup-python@v3
+      - name: 🛠️ Set up Python
+        uses: actions/setup-python@v3.0.0
         with:
           python-version: "3.x"
+          cache: 'pip'
 
-      - name: Get version
+      - name: 🔢 Get version
         id: version
         uses: home-assistant/actions/helpers/version@master
 
-      - name: "Set version number"
+      - name: 🔢 Set version number
         run: |
           sed -i "/MINIMUM_HA_VERSION = /c\MINIMUM_HA_VERSION = \"$(jq .homeassistant -r ${{ github.workspace }}/hacs.json)\"" ${{ github.workspace }}/custom_components/hacs/const.py
           python3 ${{ github.workspace }}/manage/update_manifest.py --version ${{ steps.version.outputs.version }}
 
-      - name: Download HACS frontend
+      - name: ⏬ Download HACS frontend
         run: ${{ github.workspace }}/manage/install_frontend
 
-      - name: Upload zip to action
+      - name: 📤 Upload zip to action
         uses: actions/upload-artifact@v2
         if: ${{ github.event_name == 'push' }}
         with:
@@ -39,18 +44,15 @@ jobs:
           path: ${{ github.workspace }}/custom_components/hacs
 
       # Pack the HACS dir as a zip and upload to the release
-      - name: ZIP HACS Dir
+      - name: 📦 ZIP HACS Dir
         if: ${{ github.event_name == 'release' }}
         run: |
           cd ${{ github.workspace }}/custom_components/hacs
           zip hacs.zip -r ./
 
-      - name: Upload zip to release
-        uses: svenstaro/upload-release-action@v1-release
+      - name: 📤 Upload zip to release
+        uses: softprops/action-gh-release@v0.1.14
         if: ${{ github.event_name == 'release' }}
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ github.workspace }}/custom_components/hacs/hacs.zip
-          asset_name: hacs.zip
-          tag: ${{ github.ref }}
-          overwrite: true
+          files: ${{ github.workspace }}/custom_components/hacs/hacs.zip
+
