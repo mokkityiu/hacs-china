@@ -2,7 +2,7 @@ name: "Lock closed issues and PR's"
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 0 1 1 1"
 
 concurrency:
   group: lock
