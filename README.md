@@ -51,6 +51,10 @@ wget -O - https://cdn.jsdelivr.net/gh/hasscc/get@main/get | HUB_DOMAIN=ghproxy.c
 
 ------
 
+## 🎉 `Hassio`/`Supervisor`加载项(`Add-ons`)商店镜像：https://gitee.com/hassio 🎉
+
+------
+
 
 # HACS (Home Assistant Community Store)
 
