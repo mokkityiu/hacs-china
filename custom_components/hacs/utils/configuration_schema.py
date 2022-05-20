@@ -41,7 +41,7 @@ def hacs_config_option_schema(options: dict = {}) -> dict:
             APPDAEMON: False,
             COUNTRY: "ALL",
             DEBUG: False,
-            EXPERIMENTAL: False,
+            EXPERIMENTAL: True,
             NETDAEMON: False,
             RELEASE_LIMIT: 5,
             SIDEPANEL_ICON: "hacs:hacs",
