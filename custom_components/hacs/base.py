@@ -651,13 +651,18 @@ class HacsBase:
                 if request.status == 200:
                     return await request.read()
 
-                raise HacsException(f"Got status code {request.status} when trying to download {url}")
+                raise HacsException(
+                    f"Got status code {request.status} when trying to download {url}"
+                )
             except asyncio.TimeoutError:
-                self.log.error(
+                self.log.warning(
                     "A timeout of 60! seconds was encountered while downloading %s, "
-                    "check the network on the host running Home Assistant. This is "
-                    "not a problem with HACS but how your host communicates with GitHub",
+                    "using over 60 seconds to download a single file is not normal. "
+                    "This is not a problem with HACS but how your host communicates with GitHub. "
+                    "check the network on the host running Home Assistant. "
+                    "Tries left %s",
                     url,
+                    tries_left,
                 )
             except BaseException as exception:  # lgtm [py/catch-base-exception] pylint: disable=broad-except
                 self.log.exception("Download failed - %s", exception)
