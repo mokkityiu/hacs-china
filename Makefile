@@ -37,9 +37,6 @@ coverage: ## Display coverage report
 update: ## Pull main from hacs/integration
 	git pull upstream main;
 
-bump-frontend: ## Bump the HACS frontend
-	@bash manage/bump_frontend;
-
 update-base-repositories: ## Update stored base repositories
 	@python3 manage/update_default_repositories.py;
 
@@ -52,5 +49,11 @@ homeassistant-install: ## Install the latest dev version of Home Assistant
 	python3 -m pip --disable-pip-version-check install -U setuptools wheel;
 	python3 -m pip --disable-pip-version-check \
 		install --upgrade git+https://github.com/home-assistant/home-assistant.git@dev;
+
+homeassistant-install-old: ## Install the oldest version of Home Assistant
+	python3 -m pip --disable-pip-version-check install -U "pip>=8.0.3,<20.3";
+	python3 -m pip --disable-pip-version-check install -U setuptools wheel;
+	python3 -m pip --disable-pip-version-check \
+		install --upgrade git+https://github.com/home-assistant/home-assistant.git@2022.4.0;
 
 homeassistant-update: homeassistant-install ## Alias for 'homeassistant-install'

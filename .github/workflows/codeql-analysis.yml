@@ -19,20 +19,20 @@ jobs:
 
     steps:
     - name: 📥 Checkout the repository
-      uses: actions/checkout@v3.0.0
+      uses: actions/checkout@v3.0.2
       with:
         fetch-depth: 2
 
     - name: 🔁 Initialize CodeQL
-      uses: github/codeql-action/init@v2.1.6
+      uses: github/codeql-action/init@v2.1.11
       with:
         languages: python
 
     - name: 🛠️ Autobuild
-      uses: github/codeql-action/autobuild@v2.1.6
+      uses: github/codeql-action/autobuild@v2.1.11
 
     - name: 🏃 Run CodeQL Analysis
-      uses: github/codeql-action/analyze@v2.1.6
+      uses: github/codeql-action/analyze@v2.1.11
 
     - name: 📨 Discord notification
       if: ${{ github.event_name == 'schedule' && failure() }}

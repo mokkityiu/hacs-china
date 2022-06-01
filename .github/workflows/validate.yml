@@ -16,7 +16,7 @@ jobs:
     name: With hassfest
     steps:
     - name: 📥 Checkout the repository
-      uses: actions/checkout@v3.0.0
+      uses: actions/checkout@v3.0.2
 
     - name: 🏃 Hassfest validation
       uses: "home-assistant/actions/hassfest@master"
@@ -34,7 +34,7 @@ jobs:
     name: With HACS Action
     steps:
     - name: 📥 Checkout the repository
-      uses: actions/checkout@v3.0.0
+      uses: actions/checkout@v3.0.2
 
     - name: 🏃 HACS validation
       uses: hacs/action@main
@@ -54,15 +54,16 @@ jobs:
     name: With Home Assistant
     strategy:
       matrix:
-        channel: [stable, beta, dev]
+        channel: [stable, beta, dev, "2022.4.0"]
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout the repository
-        uses: actions/checkout@v3.0.0
+        uses: actions/checkout@v3.0.2
 
       - name: 📋 Copy sample configuration for Home Assistant
         run: |
           mkdir ./test_configuration
+          bash manage/install_frontend
           cp -r ./custom_components ./test_configuration
           echo "default_config:" >> ./test_configuration/configuration.yaml
           echo "hacs:" >> ./test_configuration/configuration.yaml

@@ -5,6 +5,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType
 import pytest
 
 from custom_components.hacs.base import HacsBase
+from custom_components.hacs.enums import HacsDispatchEvent
 from custom_components.hacs.repositories import HacsIntegrationRepository
 from custom_components.hacs.sensor import (
     HACSSensor,
@@ -35,16 +36,6 @@ async def test_sensor_data(hacs: HacsBase, hass: HomeAssistant):
     assert sensor.icon == "hacs:hacs"
     assert sensor.unique_id.startswith("0717a0cd")
     assert sensor.unit_of_measurement == "pending update(s)"
-
-
-@pytest.mark.asyncio
-async def test_device_info_entry_type_pre_2021_12(hacs: HacsBase, hass: HomeAssistant):
-    # LEGACY can be removed when min HA version is 2021.12
-    hacs.core.ha_version = "2021.12.0"
-    sensor = await sensor_setup(hacs, hass)
-    entry_type = sensor.device_info["entry_type"]
-    assert entry_type == "service"
-    assert isinstance(entry_type, str)
 
 
 @pytest.mark.asyncio
@@ -84,7 +75,7 @@ async def test_sensor_update_event(hacs: HacsBase, hass: HomeAssistant):
     hacs.common.categories = {"integration"}
     assert sensor.state is None
 
-    hass.bus.async_fire("hacs/repository", {})
+    hacs.async_dispatch(HacsDispatchEvent.REPOSITORY, {})
 
     await hass.async_block_till_done()
     assert sensor.state == 1
@@ -124,10 +115,10 @@ async def test_sensor_update_manual(hacs: HacsBase, hass: HomeAssistant):
 
 
 @pytest.mark.asyncio
-async def test_setup_platform(hass: HomeAssistant):
+async def test_setup_platform(hass: HomeAssistant, hacs: HacsBase):
     await async_setup_platform(hass, {}, mock_setup)
 
 
 @pytest.mark.asyncio
-async def test_setup_entry(hass: HomeAssistant):
+async def test_setup_entry(hass: HomeAssistant, hacs: HacsBase):
     await async_setup_entry(hass, {}, mock_setup)
