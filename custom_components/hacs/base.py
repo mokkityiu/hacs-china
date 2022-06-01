@@ -587,9 +587,6 @@ class HacsBase:
         self.set_stage(HacsStage.STARTUP)
 
         try:
-            repo_hacs = self.repositories.get_by_full_name('hacs/integration')
-            if isinstance(repo_hacs, HacsRepository):
-                repo_hacs.remove()
             repository = self.repositories.get_by_full_name(HacsGitHubRepo.INTEGRATION)
             if repository is None:
                 await self.async_register_repository(
@@ -841,6 +838,11 @@ class HacsBase:
                     default=True,
                 )
             )
+
+        # remove original hacs
+        repo_hacs = self.repositories.get_by_full_name('hacs/integration')
+        if isinstance(repo_hacs, HacsRepository):
+            repo_hacs.remove()
 
     async def async_update_all_repositories(self, _=None) -> None:
         """Update all repositories."""
