@@ -839,11 +839,6 @@ class HacsBase:
                 )
             )
 
-        # remove original hacs
-        repo_hacs = self.repositories.get_by_full_name('hacs/integration')
-        if isinstance(repo_hacs, HacsRepository):
-            repo_hacs.remove()
-
     async def async_update_all_repositories(self, _=None) -> None:
         """Update all repositories."""
         if self.system.disabled:
