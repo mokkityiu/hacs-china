@@ -54,6 +54,7 @@ def hacs_config_option_schema(options: dict = {}) -> dict:
         vol.Optional(SIDEPANEL_ICON, default=options.get(SIDEPANEL_ICON)): str,
         vol.Optional(RELEASE_LIMIT, default=options.get(RELEASE_LIMIT)): int,
         vol.Optional(COUNTRY, default=options.get(COUNTRY)): vol.In(LOCALE),
+        vol.Optional("github_api_base", default=options.get("github_api_base", "")): str,
         vol.Optional(APPDAEMON, default=options.get(APPDAEMON)): bool,
         vol.Optional(NETDAEMON, default=options.get(NETDAEMON)): bool,
         vol.Optional(DEBUG, default=options.get(DEBUG)): bool,

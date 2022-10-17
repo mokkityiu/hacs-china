@@ -45,7 +45,8 @@
                     "appdaemon": "启用 AppDaemon 应用发现 & 追踪",
                     "netdaemon": "启用 NetDaemon 应用发现 & 追踪",
                     "sidepanel_icon": "侧边栏图标",
-                    "sidepanel_title": "侧边栏标题"
+                    "sidepanel_title": "侧边栏标题",
+                    "github_api_base": "Github API根路径 (默认: https://api.github.com)"
                 }
             }
         }

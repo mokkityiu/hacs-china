@@ -118,6 +118,7 @@ async def async_initialize_integration(
         token=hacs.configuration.token,
         session=clientsession,
         **{"client_name": f"HACS/{hacs.version}"},
+        **{"base_url": hacs.configuration.github_api_base, "timeout": 30},
     )
 
     async def async_startup():

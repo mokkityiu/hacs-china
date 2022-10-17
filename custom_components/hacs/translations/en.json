@@ -49,7 +49,8 @@
                     "appdaemon": "Enable AppDaemon apps discovery & tracking",
                     "netdaemon": "Enable NetDaemon apps discovery & tracking",
                     "sidepanel_icon": "Side panel icon",
-                    "sidepanel_title": "Side panel title"
+                    "sidepanel_title": "Side panel title",
+                    "github_api_base": "Github API Base (default: https://api.github.com)"
                 }
             }
         }
