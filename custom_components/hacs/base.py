@@ -686,13 +686,6 @@ class HacsBase:
                 "release": "https://ghproxy.com/github.com",
             },
 
-            # https://mirror.ghproxy.com
-            "ghproxy2": {
-                "raw": "https://mirror.ghproxy.com/raw.githubusercontent.com",
-                "archive": "https://mirror.ghproxy.com/github.com",
-                "release": "https://mirror.ghproxy.com/github.com",
-            },
-
             # https://doc.fastgit.org/zh-cn/node.html
             "fastgit": {
                 "raw": "https://raw.fastgit.org",
