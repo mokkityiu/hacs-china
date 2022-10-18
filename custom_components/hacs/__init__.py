@@ -111,6 +111,7 @@ async def async_initialize_integration(
             "User-Agent": f"HACS/{hacs.version}",
             "Accept": ACCEPT_HEADERS["preview"],
         },
+        base_url=hacs.configuration.github_api_base,
     )
 
     ## New GitHub client

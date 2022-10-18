@@ -20,9 +20,10 @@ async def system_health_info(hass):
     """Get info for the info page."""
     hacs: HacsBase = hass.data[DOMAIN]
     response = await hacs.githubapi.rate_limit()
+    api_url = hacs.configuration.github_api_base or BASE_API_URL
 
     data = {
-        "GitHub API": system_health.async_check_can_reach_url(hass, BASE_API_URL, GITHUB_STATUS),
+        "GitHub API": system_health.async_check_can_reach_url(hass, api_url, api_url),
         "GitHub Content": system_health.async_check_can_reach_url(
             hass, "https://raw.githubusercontent.com/hacs/integration/main/hacs.json"
         ),

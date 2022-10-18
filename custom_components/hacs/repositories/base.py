@@ -597,7 +597,8 @@ class HacsRepository:
         if not ref:
             raise HacsException("Missing required elements.")
 
-        url = f"{BASE_API_URL}/repos/{self.data.full_name}/zipball/{ref}"
+        api_base = self.hacs.configuration.github_api_base or BASE_API_URL
+        url = f"{api_base}/repos/{self.data.full_name}/zipball/{ref}"
 
         filecontent = await self.hacs.async_download_file(
             url,
