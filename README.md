@@ -72,7 +72,7 @@ wget -O - https://ghproxy.com/raw.githubusercontent.com/hasscc/get/main/get | HU
   - [创建`Worker`服务](https://dash.cloudflare.com/?account=workers)，选择`HTTP 处理程序`
   - 复制[`index.js`](https://raw.githubusercontent.com/hacs-china/gh-proxy/master/index.js)中的代码，并张贴至Worker的代码编辑器中
   - 部署并在触发器中添加自定义域名，Worker分配的域名是无法被访问的
-  - 访问`https://your.mirror.domain/api/`检查是都生效
+  - 访问`https://your.mirror.domain/api/`检查是否生效
   - 在HA的集成与服务页面找到已添加的HACS，点击`选项`
   - 填入镜像地址`https://your.mirror.domain/api`
 
