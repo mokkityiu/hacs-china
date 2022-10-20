@@ -669,6 +669,8 @@ class HacsRepository:
                 f"{name.lower()}_zh-CN.md",
                 f"{name.upper()}_zh.md",
                 f"{name.lower()}_zh.md",
+                f"{name.upper()}_hans.md",
+                f"{name.lower()}_hans.md",
                 f"{name.upper()}.md",
                 f"{name}.md",
                 f"{name}.MD",
