@@ -663,6 +663,12 @@ class HacsRepository:
                 else "info"
             )
             return (
+                f"{name.upper()}_zh-Hans.md",
+                f"{name.lower()}_zh-Hans.md",
+                f"{name.upper()}_zh-CN.md",
+                f"{name.lower()}_zh-CN.md",
+                f"{name.upper()}_zh.md",
+                f"{name.lower()}_zh.md",
                 f"{name.upper()}.md",
                 f"{name}.md",
                 f"{name}.MD",
