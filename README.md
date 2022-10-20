@@ -68,7 +68,7 @@ wget -O - https://ghproxy.com/raw.githubusercontent.com/hasscc/get/main/get | HU
 > 我们建议你使用自己的域名创建镜像，当然也可以使用[`freenom.com`](https://freenom.com)的免费域名。
 
 - 创建自己的镜像：
-  - 登陆或注册`Cloudflare`添加自己的域名，并修改域名的NS记录
+  - 登陆或注册[`Cloudflare`](https://cloudflare.com)添加自己的域名，并修改域名的NS记录
   - [创建`Worker`服务](https://dash.cloudflare.com/?account=workers)，选择`HTTP 处理程序`
   - 复制[`index.js`](https://raw.githubusercontent.com/hacs-china/gh-proxy/master/index.js)中的代码，并张贴至Worker的代码编辑器中
   - 部署并在触发器中添加自定义域名，Worker分配的域名是无法被访问的
