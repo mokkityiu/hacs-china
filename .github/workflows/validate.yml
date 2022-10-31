@@ -16,7 +16,7 @@ jobs:
     name: With hassfest
     steps:
     - name: 📥 Checkout the repository
-      uses: actions/checkout@v3.0.2
+      uses: actions/checkout@v3.1.0
 
     - name: 🏃 Hassfest validation
       uses: "home-assistant/actions/hassfest@master"
@@ -50,11 +50,11 @@ jobs:
     name: With Home Assistant
     strategy:
       matrix:
-        channel: [stable, beta, dev, "2022.8.0"]
+        channel: [stable, beta, dev, "2022.10.0"]
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.1.0
 
       - name: 📋 Copy sample configuration for Home Assistant
         run: |
