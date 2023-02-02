@@ -20,7 +20,7 @@ concurrency:
 jobs:
   category-data:
     runs-on: ubuntu-latest
-    if: github.repository == 'hacs/integration'
+    if: github.repository == 'hacs-china/integration'
     name: Generate ${{ matrix.category }} data
     strategy:
       matrix:
@@ -86,30 +86,15 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Upload to R2
-        if: steps.updated.outputs.updated == 'true'
-        run: |
-          aws s3 sync \
-            outputdata/${{ matrix.category }} \
-            s3://data-v2/${{ matrix.category }} \
-            --endpoint-url ${{ secrets.CF_R2_ENDPOINT_DATA }}
+      - name: Commit to Github
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.CF_R2_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
-
-      - name: Bust Cloudflare cache
-        if: steps.updated.outputs.updated == 'true'
+          GITHUB_TOKEN: ${{ secrets.API_TOKEN_GITHUB }}
         run: |
-          curl --silent --show-error --fail -X POST \
-            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
-            -H "Authorization: Bearer ${{ secrets.CF_BUST_CACHE_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            --data '{"files": ["https:\/\/data-v2.hacs.xyz\/${{ matrix.category }}\/data.json", "https:\/\/data-v2.hacs.xyz\/${{ matrix.category }}\/repositories.json"]}'
-
-      - name: Discord notification
-        if: ${{ github.event_name == 'schedule' && failure() }}
-        run: |
-          curl \
-            -H "Content-Type: application/json" \
-            -d '{"username": "GitHub action failure", "content": "[Scheduled action failed!](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}})"}' \
-            ${{ secrets.DISCORD_WEBHOOK_ACTION_FAILURE }}
+          git config --global user.name github-actions
+          git config --global user.email github-actions@github.com
+          git clone https://x-access-token:$GITHUB_TOKEN@github.com/hacs-china/data.git ../hacs-data
+          cp -rf outputdata/${{ matrix.category }} ../hacs-data/
+          cd ../hacs-data
+          git add -A .
+          git commit -m "Generated hacs ${{ matrix.category }} data"
+          git push -u https://x-access-token:$GITHUB_TOKEN@github.com/hacs-china/data.git main
