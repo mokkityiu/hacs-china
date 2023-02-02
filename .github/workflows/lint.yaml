@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   matrix:
     runs-on: ubuntu-latest
@@ -25,14 +29,13 @@ jobs:
           - mixed-line-ending
     steps:
       - name: 📥 Checkout the repository
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.3.0
 
       - name: 🛠️ Set up Python
-        uses: actions/setup-python@v4.4.0
+        uses: actions/setup-python@v4.5.0
         id: python
         with:
           python-version: "3.x"
-          cache: 'pip'
 
       - name: 📦 Install pre-commit
         run: |
@@ -47,16 +50,20 @@ jobs:
     name: With bellybutton
     steps:
     - name: 📥 Checkout the repository
-      uses: actions/checkout@v3.2.0
+      uses: actions/checkout@v3.3.0
 
     - name: 🛠️ Set up Python
-      uses: actions/setup-python@v4.4.0
+      uses: actions/setup-python@v4.5.0
+      id: python
       with:
         python-version: "3.x"
         cache: 'pip'
+        cache-dependency-path: |
+          requirements_base.txt
+          requirements_lint.txt
 
-    - name: 📦 Install dependencies
-      run:  make requirements
+    - name: 📦 Install requirements
+      run: python3 -m pip install -r requirements_lint.txt
 
     - name: ✅ Add problem matcher
       run: echo "::add-matcher::.github/matchers/bellybutton.json"
@@ -69,10 +76,7 @@ jobs:
     name: With JQ
     steps:
     - name: 📥 Checkout the repository
-      uses: actions/checkout@v3.2.0
-
-    - name: 📦 Install dependencies
-      run:  make requirements
+      uses: actions/checkout@v3.3.0
 
     - name: 🏃 Run validation
       run: jq -r -e -c . tests/fixtures/*.json

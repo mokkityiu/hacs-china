@@ -12,6 +12,10 @@ on:
       - 'custom_components/**'
       - 'action/**'
 
+concurrency:
+  group: container-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build
@@ -19,7 +23,7 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: actions/checkout@v3.2.0
+      - uses: actions/checkout@v3.3.0
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2.1.0
@@ -40,7 +44,7 @@ jobs:
             type=sha
 
       - name: Build and push
-        uses: docker/build-push-action@v3.2.0
+        uses: docker/build-push-action@v3.3.0
         with:
           context: ./action
           push: true

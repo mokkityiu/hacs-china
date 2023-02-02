@@ -1,0 +1,115 @@
+name: Generate HACS Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      forceRepositoryUpdate:
+        description: 'Force repository update'
+        required: false
+        default: 'False'
+        type: choice
+        options:
+          - "False"
+          - "True"
+  schedule:
+    - cron: "0 */2 * * *"
+
+concurrency:
+  group: category-data
+
+jobs:
+  category-data:
+    runs-on: ubuntu-latest
+    if: github.repository == 'hacs/integration'
+    name: Generate ${{ matrix.category }} data
+    strategy:
+      matrix:
+        category:
+          - appdaemon
+          - integration
+          - netdaemon
+          - plugin
+          - python_script
+          - theme
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3.2.0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4.5.0
+        id: python
+        with:
+          python-version: "3.x"
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements_base.txt
+            requirements_generate_data.txt
+
+      - name: Install dependencies
+        run:  |
+          bash manage/install_frontend
+          pip3 install \
+            --disable-pip-version-check install \
+            --ignore-installed \
+            --constraint constraints.txt \
+            --requirement requirements_generate_data.txt \
+            --use-deprecated=legacy-resolver
+
+
+      - name: Generate ${{ matrix.category }} data
+        run: python3 -m scripts.data.generate_category_data ${{ matrix.category }}
+        env:
+          DATA_GENERATOR_TOKEN: ${{ secrets.DATA_GENERATOR_TOKEN }}
+          FORCE_REPOSITORY_UPDATE: ${{ inputs.forceRepositoryUpdate }}
+
+      - name: Check if updated
+        id: updated
+        run: |
+          if test -f "outputdata/${{ matrix.category }}/data.json"; then
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate output with JQ
+        if: steps.updated.outputs.updated == 'true'
+        run: |
+          jq -c . outputdata/${{ matrix.category }}/data.json
+          jq -c . outputdata/${{ matrix.category }}/repositories.json
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: steps.updated.outputs.updated == 'true'
+        with:
+          name: ${{ matrix.category }}
+          path: outputdata/${{ matrix.category }}
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload to R2
+        if: steps.updated.outputs.updated == 'true'
+        run: |
+          aws s3 sync \
+            outputdata/${{ matrix.category }} \
+            s3://data-v2/${{ matrix.category }} \
+            --endpoint-url ${{ secrets.CF_R2_ENDPOINT_DATA }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.CF_R2_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+
+      - name: Bust Cloudflare cache
+        if: steps.updated.outputs.updated == 'true'
+        run: |
+          curl --silent --show-error --fail -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CF_BUST_CACHE_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"files": ["https:\/\/data-v2.hacs.xyz\/${{ matrix.category }}\/data.json", "https:\/\/data-v2.hacs.xyz\/${{ matrix.category }}\/repositories.json"]}'
+
+      - name: Discord notification
+        if: ${{ github.event_name == 'schedule' && failure() }}
+        run: |
+          curl \
+            -H "Content-Type: application/json" \
+            -d '{"username": "GitHub action failure", "content": "[Scheduled action failed!](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}})"}' \
+            ${{ secrets.DISCORD_WEBHOOK_ACTION_FAILURE }}

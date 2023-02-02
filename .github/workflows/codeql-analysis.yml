@@ -10,6 +10,10 @@ on:
   schedule:
     - cron: '0 4 * * *'
 
+concurrency:
+  group: code-analysis-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
     name: Analyze
@@ -19,25 +23,25 @@ jobs:
 
     steps:
     - name: 📥 Checkout the repository
-      uses: actions/checkout@v3.2.0
+      uses: actions/checkout@v3.3.0
       with:
         fetch-depth: 2
 
     - name: 🔁 Initialize CodeQL
-      uses: github/codeql-action/init@v2.1.37
+      uses: github/codeql-action/init@v2.1.39
       with:
         languages: python
 
     - name: 🛠️ Autobuild
-      uses: github/codeql-action/autobuild@v2.1.37
+      uses: github/codeql-action/autobuild@v2.1.39
 
     - name: 🏃 Run CodeQL Analysis
-      uses: github/codeql-action/analyze@v2.1.37
+      uses: github/codeql-action/analyze@v2.1.39
 
     - name: 📨 Discord notification
       if: ${{ github.event_name == 'schedule' && failure() }}
-      env:
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_ACTION_FAILURE }}
-      uses: Ilshidur/action-discord@0.3.2
-      with:
-        args: "[Scheduled action failed!](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}})"
+      run: |
+        curl \
+          -H "Content-Type: application/json" \
+          -d '{"username": "GitHub action failure", "content": "[Scheduled action failed!](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}})"}' \
+          ${{ secrets.DISCORD_WEBHOOK_ACTION_FAILURE }}

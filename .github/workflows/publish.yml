@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   release_zip_file:
     name: Publish HACS zip file asset
@@ -16,19 +20,20 @@ jobs:
       contents: write
     steps:
       - name: 📥 Checkout the repository
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.3.0
 
       - name: 🛠️ Set up Python
-        uses: actions/setup-python@v4.4.0
+        uses: actions/setup-python@v4.5.0
         with:
           python-version: "3.x"
-          cache: 'pip'
 
       - name: 🔢 Get version
+        if: ${{ github.event_name == 'release' }}
         id: version
         uses: home-assistant/actions/helpers/version@master
 
       - name: 🔢 Set version number
+        if: ${{ github.event_name == 'release' }}
         run: |
           sed -i "/MINIMUM_HA_VERSION = /c\MINIMUM_HA_VERSION = \"$(jq .homeassistant -r ${{ github.workspace }}/hacs.json)\"" ${{ github.workspace }}/custom_components/hacs/const.py
           python3 ${{ github.workspace }}/manage/update_manifest.py --version ${{ steps.version.outputs.version }}
@@ -37,11 +42,12 @@ jobs:
         run: ${{ github.workspace }}/manage/install_frontend
 
       - name: 📤 Upload zip to action
-        uses: actions/upload-artifact@v3.1.1
+        uses: actions/upload-artifact@v3.1.2
         if: ${{ github.event_name == 'push' }}
         with:
           name: hacs
           path: ${{ github.workspace }}/custom_components/hacs
+          retention-days: 7
 
       # Pack the HACS dir as a zip and upload to the release
       - name: 📦 ZIP HACS Dir

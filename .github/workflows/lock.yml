@@ -5,11 +5,13 @@ on:
     - cron: "0 0 1 1 1"
 
 concurrency:
-  group: lock
+  group: lock-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lock:
     runs-on: ubuntu-latest
+    if: github.repository == 'hacs/integration'
     permissions:
       issues: write
       pull-requests: write
