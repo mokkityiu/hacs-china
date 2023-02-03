@@ -57,13 +57,18 @@ jobs:
 
       - name: Commit to Github
         env:
-          GITHUB_TOKEN: ${{ secrets.API_TOKEN_GITHUB }}
+          GITHUB_TOKEN: x-access-token:${{ secrets.API_TOKEN_GITHUB }}
         run: |
           git config --global user.name github-actions
           git config --global user.email github-actions@github.com
-          git clone https://x-access-token:$GITHUB_TOKEN@github.com/hacs-china/data.git ../hacs-data
+          git clone https://$GITHUB_TOKEN@github.com/hacs-china/data.git ../hacs-data
           cp -rf outputdata/${{ matrix.category }} ../hacs-data/
           cd ../hacs-data
           git add -A .
-          git commit -m "Update hacs ${{ matrix.category }} data"
-          git push -u https://x-access-token:$GITHUB_TOKEN@github.com/hacs-china/data.git main
+          if git status | grep -q "Changes to be committed"
+          then
+            git commit -m "Update hacs ${{ matrix.category }} data"
+            git push -u https://$GITHUB_TOKEN@github.com/hacs-china/data.git main
+          else
+            echo "No changes detected"
+          fi
