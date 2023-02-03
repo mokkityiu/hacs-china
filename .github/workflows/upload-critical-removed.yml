@@ -6,10 +6,10 @@ on:
     - cron: "0 */1 * * *"
 
 concurrency:
-  group: category-data
+  group: hacs-default-data
 
 jobs:
-  category-data:
+  hacs-default-data:
     runs-on: ubuntu-latest
     name: Upload ${{ matrix.category }} data
     strategy:
