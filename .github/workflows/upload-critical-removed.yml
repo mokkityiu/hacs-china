@@ -1,0 +1,69 @@
+name: Upload critical & removed data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */1 * * *"
+
+concurrency:
+  group: category-data
+
+jobs:
+  category-data:
+    runs-on: ubuntu-latest
+    name: Upload ${{ matrix.category }} data
+    strategy:
+      matrix:
+        category:
+          - critical
+          - removed
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v4.5.0
+        id: python
+        with:
+          python-version: "3.x"
+
+      - name: Handle the ${{ matrix.category }} file
+        run: |
+          mkdir -p outputdata/${{ matrix.category }}
+          wget https://raw.githubusercontent.com/hacs/default/master/${{ matrix.category }}
+          jq -c . < ${{ matrix.category }} > outputdata/${{ matrix.category }}/data.json
+          jq -c '[.[].repository]' < ${{ matrix.category }} > outputdata/${{ matrix.category }}/repositories.json
+
+      - name: Check if updated
+        id: updated
+        run: |
+          if test -f "outputdata/${{ matrix.category }}/data.json"; then
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate output with JQ
+        if: steps.updated.outputs.updated == 'true'
+        run: |
+          jq -c . outputdata/${{ matrix.category }}/data.json
+          jq -c . outputdata/${{ matrix.category }}/repositories.json
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: steps.updated.outputs.updated == 'true'
+        with:
+          name: ${{ matrix.category }}
+          path: outputdata/${{ matrix.category }}
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Commit to Github
+        env:
+          GITHUB_TOKEN: ${{ secrets.API_TOKEN_GITHUB }}
+        run: |
+          git config --global user.name github-actions
+          git config --global user.email github-actions@github.com
+          git clone https://x-access-token:$GITHUB_TOKEN@github.com/hacs-china/data.git ../hacs-data
+          cp -rf outputdata/${{ matrix.category }} ../hacs-data/
+          cd ../hacs-data
+          git add -A .
+          git commit -m "Update hacs ${{ matrix.category }} data"
+          git push -u https://x-access-token:$GITHUB_TOKEN@github.com/hacs-china/data.git main
