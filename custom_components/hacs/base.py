@@ -161,9 +161,9 @@ class HacsCommon:
 
     categories: set[str] = field(default_factory=set)
     renamed_repositories: dict[str, str] = field(default_factory=dict)
-    archived_repositories: list[str] = field(default_factory=list)
-    ignored_repositories: list[str] = field(default_factory=list)
-    skip: list[str] = field(default_factory=list)
+    archived_repositories: set[str] = field(default_factory=set)
+    ignored_repositories: set[str] = field(default_factory=set)
+    skip: set[str] = field(default_factory=set)
 
 
 @dataclass
@@ -198,20 +198,20 @@ class HacsRepositories:
     """HACS Repositories."""
 
     _default_repositories: set[str] = field(default_factory=set)
-    _repositories: list[HacsRepository] = field(default_factory=list)
+    _repositories: set[HacsRepository] = field(default_factory=set)
     _repositories_by_full_name: dict[str, HacsRepository] = field(default_factory=dict)
     _repositories_by_id: dict[str, HacsRepository] = field(default_factory=dict)
-    _removed_repositories: list[RemovedRepository] = field(default_factory=list)
+    _removed_repositories_by_full_name: dict[str, RemovedRepository] = field(default_factory=dict)
 
     @property
     def list_all(self) -> list[HacsRepository]:
         """Return a list of repositories."""
-        return self._repositories
+        return list(self._repositories)
 
     @property
     def list_removed(self) -> list[RemovedRepository]:
         """Return a list of removed repositories."""
-        return self._removed_repositories
+        return list(self._removed_repositories_by_full_name.values())
 
     @property
     def list_downloaded(self) -> list[HacsRepository]:
@@ -236,7 +236,7 @@ class HacsRepositories:
             repository = registered_repo
 
         if repository not in self._repositories:
-            self._repositories.append(repository)
+            self._repositories.add(repository)
 
         self._repositories_by_id[repo_id] = repository
         self._repositories_by_full_name[repository.data.full_name_lower] = repository
@@ -334,22 +334,15 @@ class HacsRepositories:
 
     def is_removed(self, repository_full_name: str) -> bool:
         """Check if a repository is removed."""
-        return repository_full_name in (
-            repository.repository for repository in self._removed_repositories
-        )
+        return repository_full_name in self._removed_repositories_by_full_name
 
     def removed_repository(self, repository_full_name: str) -> RemovedRepository:
         """Get repository by full name."""
-        if self.is_removed(repository_full_name):
-            if removed := [
-                repository
-                for repository in self._removed_repositories
-                if repository.repository == repository_full_name
-            ]:
-                return removed[0]
+        if removed := self._removed_repositories_by_full_name.get(repository_full_name):
+            return removed
 
         removed = RemovedRepository(repository=repository_full_name)
-        self._removed_repositories.append(removed)
+        self._removed_repositories_by_full_name[repository_full_name] = removed
         return removed
 
 
@@ -458,7 +451,9 @@ class HacsBase:
 
         try:
             await self.hass.async_add_executor_job(_write_file)
-        except BaseException as error:  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        except (
+            BaseException  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        ) as error:
             self.log.error("Could not write data to %s - %s", file_path, error)
             return False
 
@@ -477,7 +472,9 @@ class HacsBase:
                 f"{reset.hour}:{reset.minute}:{reset.second}",
             )
             self.disable_hacs(HacsDisabledReason.RATE_LIMIT)
-        except BaseException as exception:  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        except (
+            BaseException  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        ) as exception:
             self.log.exception(exception)
 
         return 0
@@ -516,7 +513,9 @@ class HacsBase:
             raise exception
         except GitHubException as exception:
             _exception = exception
-        except BaseException as exception:  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        except (
+            BaseException  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        ) as exception:
             self.log.exception(exception)
             _exception = exception
 
@@ -548,7 +547,12 @@ class HacsBase:
             raise AddonRepositoryException()
 
         if category not in RERPOSITORY_CLASSES:
-            raise HacsException(f"{category} is not a valid repository category.")
+            self.log.warning(
+                "%s is not a valid repository category, %s will not be registered.",
+                category,
+                repository_full_name,
+            )
+            return
 
         if (renamed := self.common.renamed_repositories.get(repository_full_name)) is not None:
             repository_full_name = renamed
@@ -558,7 +562,7 @@ class HacsBase:
             try:
                 await repository.async_registration(ref)
                 if repository.validate.errors:
-                    self.common.skip.append(repository.data.full_name)
+                    self.common.skip.add(repository.data.full_name)
                     if not self.status.startup:
                         self.log.error("Validation for %s failed.", repository_full_name)
                     if self.system.action:
@@ -577,7 +581,7 @@ class HacsBase:
                     )
                 return
             except AIOGitHubAPIException as exception:
-                self.common.skip.append(repository.data.full_name)
+                self.common.skip.add(repository.data.full_name)
                 raise HacsException(
                     f"Validation for {repository_full_name} failed with {exception}."
                 ) from exception
@@ -775,7 +779,9 @@ class HacsBase:
             entry=self.configuration.config_entry,
             platforms=platforms,
         )
-        self.hass.config_entries.async_setup_platforms(self.configuration.config_entry, platforms)
+        await self.hass.config_entries.async_forward_entry_setups(
+            self.configuration.config_entry, platforms
+        )
 
     @callback
     def async_dispatch(self, signal: HacsDispatchEvent, data: dict | None = None) -> None:
@@ -788,6 +794,9 @@ class HacsBase:
         for category in (HacsCategory.INTEGRATION, HacsCategory.PLUGIN):
             self.enable_hacs_category(HacsCategory(category))
 
+        if self.configuration.experimental and self.core.ha_version >= "2023.4.0b0":
+            self.enable_hacs_category(HacsCategory.TEMPLATE)
+
         if HacsCategory.PYTHON_SCRIPT in self.hass.config.components:
             self.enable_hacs_category(HacsCategory.PYTHON_SCRIPT)
 
@@ -797,7 +806,18 @@ class HacsBase:
         if self.configuration.appdaemon:
             self.enable_hacs_category(HacsCategory.APPDAEMON)
         if self.configuration.netdaemon:
-            self.enable_hacs_category(HacsCategory.NETDAEMON)
+            downloaded_netdaemon = [
+                x
+                for x in self.repositories.list_downloaded
+                if x.data.category == HacsCategory.NETDAEMON
+            ]
+            if len(downloaded_netdaemon) != 0:
+                self.log.warning(
+                    "NetDaemon in HACS is deprectaded. It will stop working in the future. "
+                    "Please remove all your current NetDaemon repositories from HACS "
+                    "and download them manually if you want to continue using them."
+                )
+                self.enable_hacs_category(HacsCategory.NETDAEMON)
 
     async def async_load_hacs_from_github(self, _=None) -> None:
         """Load HACS from GitHub."""
@@ -882,6 +902,15 @@ class HacsBase:
                         repository.repository_manifest.update_data(
                             {**dict(HACS_MANIFEST_KEYS_TO_EXPORT), **manifest}
                         )
+                    self.async_dispatch(
+                        HacsDispatchEvent.REPOSITORY,
+                        {
+                            "id": 1337,
+                            "action": "update",
+                            "repository": repository.data.full_name,
+                            "repository_id": repository.data.id,
+                        },
+                    )
 
         if category == "integration":
             self.status.inital_fetch_done = True

@@ -157,14 +157,19 @@ async def hacs_repositories_add(
     if renamed := hacs.common.renamed_repositories.get(repository):
         repository = renamed
 
-    if not hacs.repositories.get_by_full_name(repository):
+    if category not in hacs.common.categories:
+        hacs.log.error("%s is not a valid category for %s", category, repository)
+
+    elif not hacs.repositories.get_by_full_name(repository):
         try:
             await hacs.async_register_repository(
                 repository_full_name=repository,
                 category=category,
             )
 
-        except BaseException as exception:  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        except (
+            BaseException  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        ) as exception:
             hacs.async_dispatch(
                 HacsDispatchEvent.ERROR,
                 {
@@ -175,7 +180,6 @@ async def hacs_repositories_add(
             )
 
     else:
-
         hacs.async_dispatch(
             HacsDispatchEvent.ERROR,
             {

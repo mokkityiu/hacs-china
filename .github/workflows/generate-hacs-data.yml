@@ -27,9 +27,9 @@ jobs:
         category:
           - appdaemon
           - integration
-          - netdaemon
           - plugin
           - python_script
+          - template
           - theme
     steps:
       - name: Checkout the repository
@@ -46,14 +46,9 @@ jobs:
             requirements_generate_data.txt
 
       - name: Install dependencies
-        run: |
-          bash manage/install_frontend
-          pip3 install \
-            --disable-pip-version-check install \
-            --ignore-installed \
-            --constraint constraints.txt \
-            --requirement requirements_generate_data.txt \
-            --use-deprecated=legacy-resolver
+        run:  |
+          scripts/install/frontend
+          scripts/install/pip_packages --requirement requirements_generate_data.txt
 
       - name: Check API rate limit
         run: |

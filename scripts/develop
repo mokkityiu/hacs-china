@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+declare frontend_dir
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+if [ ! -f "configuration.yaml" ]; then
+  echo "Creating default configuration."
+  echo "
+default_config:
+frontend:
+  themes: !include_dir_merge_named themes
+logger:
+  default: info
+  logs:
+    custom_components.hacs: debug
+    # aiogithubapi: debug
+    # awesomeversion: debug
+" >> "configuration.yaml"
+fi
+
+while getopts u:a:f: flag
+do
+    case "${flag}" in
+        f) frontend_dir=${OPTARG};;
+    esac
+done
+
+echo "Installing HACS frontend"
+[ -z "${frontend_dir}" ] && bash "scripts/install/frontend"
+
+# Start Home Assistant
+HACS_FRONTEND_DIR="$(readlink -f ${frontend_dir})" hass -c . --debug

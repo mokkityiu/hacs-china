@@ -91,6 +91,8 @@ TOPIC_FILTER = (
     "sensor",
     "smart-home",
     "smarthome",
+    "template",
+    "templates",
     "theme",
     "themes",
 )
@@ -102,6 +104,7 @@ REPOSITORY_KEYS_TO_EXPORT = (
     ("description", ""),
     ("downloads", 0),
     ("domain", None),
+    ("etag_releases", None),
     ("etag_repository", None),
     ("full_name", ""),
     ("last_commit", None),
@@ -143,6 +146,7 @@ class RepositoryData:
     domain: str = None
     downloads: int = 0
     etag_repository: str = None
+    etag_releases: str = None
     file_name: str = ""
     first_install: bool = False
     full_name: str = ""
@@ -505,14 +509,18 @@ class HacsRepository:
         self.data.description = self.data.description
 
     @concurrent(concurrenttasks=10, backoff_time=5)
-    async def common_update(self, ignore_issues=False, force=False) -> bool:
+    async def common_update(self, ignore_issues=False, force=False, skip_releases=False) -> bool:
         """Common information update steps of the repository."""
         self.logger.debug("%s Getting repository information", self.string)
 
         # Attach repository
         current_etag = self.data.etag_repository
         try:
-            await self.common_update_data(ignore_issues=ignore_issues, force=force)
+            await self.common_update_data(
+                ignore_issues=ignore_issues,
+                force=force,
+                skip_releases=skip_releases,
+            )
         except HacsRepositoryExistException:
             self.data.full_name = self.hacs.common.renamed_repositories[self.data.full_name]
             await self.common_update_data(ignore_issues=ignore_issues, force=force)
@@ -755,9 +763,8 @@ class HacsRepository:
 
     def remove(self) -> None:
         """Run remove tasks."""
-        self.logger.info("%s Starting removal", self.string)
-
         if self.hacs.repositories.is_registered(repository_id=str(self.data.id)):
+            self.logger.info("%s Starting removal", self.string)
             self.hacs.repositories.unregister(self)
 
     async def uninstall(self) -> None:
@@ -776,6 +783,8 @@ class HacsRepository:
                 await self.hacs.hass.services.async_call("frontend", "reload_themes", {})
             except BaseException:  # lgtm [py/catch-base-exception] pylint: disable=broad-except
                 pass
+        elif self.data.category == "template":
+            await self.hacs.hass.services.async_call("homeassistant", "reload_custom_templates", {})
 
         await async_remove_store(self.hacs.hass, f"hacs/{self.data.id}.hacs")
 
@@ -800,6 +809,8 @@ class HacsRepository:
         try:
             if self.data.category == "python_script":
                 local_path = f"{self.content.path.local}/{self.data.name}.py"
+            elif self.data.category == "template":
+                local_path = f"{self.content.path.local}/{self.data.file_name}"
             elif self.data.category == "theme":
                 path = (
                     f"{self.hacs.core.config_path}/"
@@ -827,7 +838,7 @@ class HacsRepository:
                     return False
                 self.logger.debug("%s Removing %s", self.string, local_path)
 
-                if self.data.category in ["python_script"]:
+                if self.data.category in ["python_script", "template"]:
                     os.remove(local_path)
                 else:
                     shutil.rmtree(local_path)
@@ -839,7 +850,9 @@ class HacsRepository:
                     "%s Presumed local content path %s does not exist", self.string, local_path
                 )
 
-        except BaseException as exception:  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        except (
+            BaseException  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        ) as exception:
             self.logger.debug("%s Removing %s failed with %s", self.string, local_path, exception)
             return False
         return True
@@ -1057,6 +1070,7 @@ class HacsRepository:
         ignore_issues: bool = False,
         force: bool = False,
         retry=False,
+        skip_releases=False,
     ) -> None:
         """Common update data."""
         releases = []
@@ -1094,7 +1108,7 @@ class HacsRepository:
         if self.data.archived and not ignore_issues:
             self.validate.errors.append("Repository is archived.")
             if self.data.full_name not in self.hacs.common.archived_repositories:
-                self.hacs.common.archived_repositories.append(self.data.full_name)
+                self.hacs.common.archived_repositories.add(self.data.full_name)
             raise HacsRepositoryArchivedException(f"{self} Repository is archived.")
 
         # Make sure the repository is not in the blacklist.
@@ -1105,19 +1119,20 @@ class HacsRepository:
                 raise HacsException(f"{self} Repository has been requested to be removed.")
 
         # Get releases.
-        try:
-            releases = await self.get_releases(
-                prerelease=self.data.show_beta,
-                returnlimit=self.hacs.configuration.release_limit,
-            )
-            if releases:
-                self.data.releases = True
-                self.releases.objects = releases
-                self.data.published_tags = [x.tag_name for x in self.releases.objects]
-                self.data.last_version = next(iter(self.data.published_tags))
+        if not skip_releases:
+            try:
+                releases = await self.get_releases(
+                    prerelease=self.data.show_beta,
+                    returnlimit=self.hacs.configuration.release_limit,
+                )
+                if releases:
+                    self.data.releases = True
+                    self.releases.objects = releases
+                    self.data.published_tags = [x.tag_name for x in self.releases.objects]
+                    self.data.last_version = next(iter(self.data.published_tags))
 
-        except HacsException:
-            self.data.releases = False
+            except HacsException:
+                self.data.releases = False
 
         if not self.force_branch:
             self.ref = self.version_to_download()
@@ -1127,6 +1142,9 @@ class HacsRepository:
                     if assets := release.assets:
                         downloads = next(iter(assets)).download_count
                         self.data.downloads = downloads
+        elif self.hacs.system.generator and self.repository_object:
+            await self.repository_object.set_last_commit()
+            self.data.last_commit = self.repository_object.last_commit
 
         self.hacs.log.debug(
             "%s Running checks against %s", self.string, self.ref.replace("tags/", "")
@@ -1256,7 +1274,9 @@ class HacsRepository:
                 return
             self.validate.errors.append(f"[{content.name}] was not downloaded.")
 
-        except BaseException as exception:  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        except (
+            BaseException  # lgtm [py/catch-base-exception] pylint: disable=broad-except
+        ) as exception:
             self.validate.errors.append(f"Download was not completed [{exception}]")
 
     async def async_remove_entity_device(self) -> None:
