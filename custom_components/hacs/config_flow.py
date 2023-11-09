@@ -215,6 +215,7 @@ class HacsOptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(SIDEPANEL_ICON, default=hacs.configuration.sidepanel_icon): str,
                 vol.Optional(RELEASE_LIMIT, default=hacs.configuration.release_limit): int,
                 vol.Optional(COUNTRY, default=hacs.configuration.country): vol.In(LOCALE),
+                vol.Optional("github_api_base", default=hacs.configuration.github_api_base): str,
                 vol.Optional(APPDAEMON, default=hacs.configuration.appdaemon): bool,
                 vol.Optional(NETDAEMON, default=hacs.configuration.netdaemon): bool,
                 vol.Optional(DEBUG, default=hacs.configuration.debug): bool,
