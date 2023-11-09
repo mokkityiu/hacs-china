@@ -134,7 +134,7 @@ class HacsFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     ): bool,
                     vol.Required("acc_disable", default=user_input.get("acc_disable", False)): bool,
                     vol.Optional(
-                        "experimental", default=user_input.get("experimental", False)
+                        "experimental", default=user_input.get("experimental", True)
                     ): bool,
                 }
             ),
@@ -157,7 +157,7 @@ class HacsFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 "token": self.activation.access_token,
             },
             options={
-                "experimental": self._user_input.get("experimental", False),
+                "experimental": self._user_input.get("experimental", True),
             },
         )
 
