@@ -696,11 +696,25 @@ class HacsBase:
             return None
 
         mirrors = {
-            # https://ghproxy.com
-            "ghproxy": {
-                "raw": "https://ghproxy.com/raw.githubusercontent.com",
-                "archive": "https://ghproxy.com/github.com",
-                "release": "https://ghproxy.com/github.com",
+            # https://gitmirror.com
+            "gitmirror": {
+                "raw": "https://raw.gitmirror.com",
+                "archive": "https://hub.gitmirror.com/github.com",
+                "release": "https://hub.gitmirror.com/github.com",
+            },
+
+            # https://ghps.cc
+            "ghps": {
+                "raw": "https://ghps.cc/raw.githubusercontent.com",
+                "archive": "https://ghps.cc/github.com",
+                "release": "https://ghps.cc/github.com",
+            },
+
+            # https://gh.ddlc.top
+            "ddlc": {
+                "raw": "https://gh.ddlc.top/raw.githubusercontent.com",
+                "archive": "https://gh.ddlc.top/github.com",
+                "release": "https://gh.ddlc.top/github.com",
             },
 
             # https://doc.fastgit.org/zh-cn/node.html
@@ -708,6 +722,20 @@ class HacsBase:
                 "raw": "https://raw.fastgit.org",
                 "archive": "https://hub.fastgit.xyz",
                 "release": "https://hub.fastgit.xyz",
+            },
+
+            # https://ghproxy.com
+            "ghproxy": {
+                "raw": "https://ghproxy.com/raw.githubusercontent.com",
+                "archive": "https://ghproxy.com/github.com",
+                "release": "https://ghproxy.com/github.com",
+            },
+
+            # https://github.com
+            "github": {
+                "raw": "https://raw.githubusercontent.com",
+                "archive": "https://github.com",
+                "release": "https://github.com",
             },
         }
 
