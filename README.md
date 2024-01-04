@@ -8,7 +8,6 @@
 本项目使用了[gitmirror.com](https://gitmirror.com)和[fastgit.org](https://fastgit.org)等提供的Github镜像服务，可以让大家更快的下载商店里的插件。
 
 <a name="install"></a>
-
 ## 安装/更新
 
 > 本项目是HACS官方集成的修改版，安装本项目版本会覆盖官方的集成，但是无需重新配置集成(共用一套配置)，因此你可以放心安装。如果想切换到官方版本，使用官方的shell命令再安装即可。
