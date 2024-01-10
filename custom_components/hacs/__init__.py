@@ -248,6 +248,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         timeout = int(service_data.get('timeout', 180))
         process = await asyncio.create_subprocess_shell(
             command,
+            cwd=hass.config.path(),
             stdin=None,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
