@@ -131,7 +131,7 @@ class HacsConfiguration:
     theme_path: str = "themes/"
     theme: bool = False
     token: str = None
-    github_api_base: str = None
+    github_api_base: str = ""
 
     def to_json(self) -> str:
         """Return a json string."""
