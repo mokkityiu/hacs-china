@@ -696,39 +696,38 @@ class HacsBase:
             return None
 
         mirrors = {
-            # https://gitmirror.com
+            "hacs.vip": {
+                "raw": "https://ghrp.hacs.vip/raw",
+                "archive": "https://ghrp.hacs.vip",
+                "release": "https://ghrp.hacs.vip",
+            },
+
+            # https://ghproxy.com
+            "ghproxy": {
+                "raw": "https://gh-proxy.com/raw.githubusercontent.com",
+                "archive": "https://gh-proxy.com/github.com",
+                "release": "https://gh-proxy.com/github.com",
+            },
+
+            # https://gitmirror.com (cloudflare)
             "gitmirror": {
                 "raw": "https://raw.gitmirror.com",
                 "archive": "https://hub.gitmirror.com/github.com",
                 "release": "https://hub.gitmirror.com/github.com",
             },
 
-            # https://ghps.cc
+            # https://ghps.cc (cloudflare)
             "ghps": {
                 "raw": "https://ghps.cc/raw.githubusercontent.com",
                 "archive": "https://ghps.cc/github.com",
                 "release": "https://ghps.cc/github.com",
             },
 
-            # https://gh.ddlc.top
+            # https://gh.ddlc.top (cloudflare)
             "ddlc": {
                 "raw": "https://gh.ddlc.top/raw.githubusercontent.com",
                 "archive": "https://gh.ddlc.top/github.com",
                 "release": "https://gh.ddlc.top/github.com",
-            },
-
-            # https://doc.fastgit.org/zh-cn/node.html
-            "fastgit": {
-                "raw": "https://raw.fastgit.org",
-                "archive": "https://hub.fastgit.xyz",
-                "release": "https://hub.fastgit.xyz",
-            },
-
-            # https://ghproxy.com
-            "ghproxy": {
-                "raw": "https://ghproxy.com/raw.githubusercontent.com",
-                "archive": "https://ghproxy.com/github.com",
-                "release": "https://ghproxy.com/github.com",
             },
 
             # https://github.com
@@ -753,9 +752,9 @@ class HacsBase:
             url = src
             mirror = mirrors[tries_keys[0 - ceil(tries_left / 2)]]
 
-            if "releases/download/" in url:
+            if "/releases/" in url:
                 url = url.replace("https://github.com/", f"{mirror['release']}/")
-            elif "archive/refs/" in url:
+            elif "/archive/" in url:
                 url = url.replace("https://github.com/", f"{mirror['archive']}/")
             else:
                 url = url.replace("https://raw.githubusercontent.com/", f"{mirror['raw']}/")
