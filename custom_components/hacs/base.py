@@ -710,7 +710,6 @@ class HacsBase:
         if url is None:
             return None
 
-        if not keep_url and "tags/" in url:
         mirrors = {
             "hacs.vip": {
                 "raw": "https://ghrp.hacs.vip/raw",
@@ -808,7 +807,8 @@ class HacsBase:
             await asyncio.sleep(1)
             continue
 
-        self.log.error("Download from %s failed", url)
+        if not nolog:
+            self.log.error("Download from %s failed", url)
         return None
 
     async def async_recreate_entities(self) -> None:
