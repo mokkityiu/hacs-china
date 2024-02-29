@@ -6,23 +6,31 @@ from contextlib import contextmanager
 import functools as ft
 import json
 import os
+from typing import Any
 
+from aiohttp import ClientSession, ClientWebSocketResponse
+from aiohttp.typedefs import StrOrURL
 from homeassistant import auth, config_entries, core as ha
-from homeassistant.auth import auth_store
+from homeassistant.auth import auth_store, models as auth_models
 from homeassistant.components.http import (
     CONFIG_SCHEMA as HTTP_CONFIG_SCHEMA,
     async_setup as http_async_setup,
 )
 from homeassistant.const import EVENT_HOMEASSISTANT_CLOSE
 from homeassistant.helpers import storage
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceRegistry
 from homeassistant.helpers.entity_registry import EntityRegistry
 from homeassistant.helpers.issue_registry import IssueRegistry
+from homeassistant.setup import async_setup_component
 import homeassistant.util.dt as date_util
 from homeassistant.util.unit_system import METRIC_SYSTEM
+from yarl import URL
 
-from custom_components.hacs.repositories.base import HacsRepository
+from custom_components.hacs.base import HacsBase
+from custom_components.hacs.repositories.base import HacsManifest, HacsRepository
 from custom_components.hacs.utils.logger import LOGGER
+from custom_components.hacs.websocket import async_register_websocket_commands
 
 from tests.async_mock import AsyncMock, Mock, patch
 
@@ -65,6 +73,7 @@ def dummy_repository_base(hacs, repository=None):
     repository.integration_manifest = {"config_flow": False, "domain": "test"}
     repository.data.published_tags = ["1", "2", "3"]
     repository.data.update_data(fixture("repository_data.json", asjson=True))
+    repository.hacs_manifest = HacsManifest.from_dict({})
 
     async def update_repository(*args, **kwargs):
         pass
@@ -137,7 +146,9 @@ async def async_test_home_assistant(loop, tmpdir):
     hass.config.units = METRIC_SYSTEM
     hass.config.skip_pip = True
     hass.data = {
+        "integrations": {},
         "custom_components": {},
+        "components": {},
         "device_registry": DeviceRegistry(hass),
         "entity_registry": EntityRegistry(hass),
         "issue_registry": IssueRegistry(hass),
@@ -164,9 +175,9 @@ async def async_test_home_assistant(loop, tmpdir):
 
     hass.async_start = mock_async_start
 
-    @ha.callback
-    def clear_instance(event):
+    async def clear_instance(event):
         """Clear global instance."""
+        await hass.http.stop()
         INSTANCES.remove(hass)
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_CLOSE, clear_instance)
@@ -237,3 +248,120 @@ def mock_storage(data=None):
         autospec=True,
     ):
         yield data
+
+
+class MockOwner(auth_models.User):
+    """Mock a user in Home Assistant."""
+
+    def __init__(self):
+        """Initialize mock user."""
+        super().__init__(
+            **{
+                "is_owner": True,
+                "is_active": True,
+                "name": "Mocked Owner User",
+                "system_generated": False,
+                "groups": [],
+                "perm_lookup": None,
+            }
+        )
+
+    @staticmethod
+    def create(hass: ha.HomeAssistant):
+        """Create a mock user."""
+        user = MockOwner()
+        ensure_auth_manager_loaded(hass.auth)
+        hass.auth._store._users[user.id] = user
+        return user
+
+
+class WSClient:
+    """WS Client to be used in testing."""
+
+    client: ClientWebSocketResponse | None = None
+
+    def __init__(self, hacs: HacsBase, token: str) -> None:
+        self.hacs = hacs
+        self.token = token
+        self.id = 0
+
+    async def _create_client(self) -> None:
+        if self.client is not None:
+            return
+
+        await async_setup_component(self.hacs.hass, "websocket_api", {})
+        await self.hacs.hass.http.start()
+        async_register_websocket_commands(self.hacs.hass)
+        self.client = await self.hacs.session.ws_connect("http://localhost:8123/api/websocket")
+        auth_response = await self.client.receive_json()
+        assert auth_response["type"] == "auth_required"
+        await self.client.send_json({"type": "auth", "access_token": self.token})
+
+        auth_response = await self.client.receive_json()
+        assert auth_response["type"] == "auth_ok"
+
+    async def send_json(self, type: str, payload: dict[str, Any]) -> dict[str, Any]:
+        self.id += 1
+        await self._create_client()
+        await self.client.send_json({"id": self.id, "type": type, **payload})
+
+    async def receive_json(self) -> dict[str, Any]:
+        return await self.client.receive_json()
+
+    async def send_and_receive_json(self, type: str, payload: dict[str, Any]) -> dict[str, Any]:
+        await self.send_json(type=type, payload=payload)
+        return await self.client.receive_json()
+
+
+class MockedResponse:
+    def __init__(self, **kwargs) -> None:
+        self.status = kwargs.get("status", 200)
+        self.read = kwargs.get("read", AsyncMock())
+        self.json = kwargs.get("json", AsyncMock())
+        self.exception = kwargs.get("exception", None)
+
+
+class ResponseMocker:
+    responses: dict[str, MockedResponse] = {}
+
+    def add(self, url: str, response: MockedResponse) -> None:
+        self.responses[url] = response
+
+    def get(self, url: str) -> MockedResponse:
+        return self.responses.pop(url, None)
+
+
+async def client_session_proxy(hass: ha.HomeAssistant) -> ClientSession:
+    """Create a mocked client session."""
+    base = async_get_clientsession(hass)
+    response_mocker = ResponseMocker()
+
+    async def _request(method: str, str_or_url: StrOrURL, *args, **kwargs):
+        url = URL(str_or_url)
+        fp = os.path.join(
+            os.path.dirname(__file__),
+            f"fixtures/proxy/{url.host}{url.path}{'.json' if url.host == 'api.github.com' else ''}",
+        )
+        print(f"Using fixture {fp} for request to {url.host}")
+
+        if (resp := response_mocker.get(str_or_url)) is not None:
+            if resp.exception:
+                raise resp.exception
+            return resp
+
+        if not os.path.exists(fp):
+            raise AssertionError(f"Missing fixture for proxy/{url.host}{url.path}")
+
+        async def read():
+            with open(fp, encoding="utf-8") as fptr:
+                return fptr.read().encode("utf-8")
+
+        async def json():
+            with open(fp, encoding="utf-8") as fptr:
+                return json.loads(fptr.read())
+
+        return AsyncMock(status=200, url=url, read=read, json=json)
+
+    base._request = _request
+
+    return base

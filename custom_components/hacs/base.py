@@ -218,6 +218,13 @@ class HacsRepositories:
         """Return a list of downloaded repositories."""
         return [repo for repo in self._repositories if repo.data.installed]
 
+    def category_downloaded(self, category: HacsCategory) -> bool:
+        """Check if a given category has been downloaded."""
+        for repository in self.list_downloaded:
+            if repository.data.category == category:
+                return True
+        return False
+
     def register(self, repository: HacsRepository, default: bool = False) -> None:
         """Register a repository."""
         repo_id = str(repository.data.id)
@@ -369,7 +376,7 @@ class HacsBase:
     status = HacsStatus()
     system = HacsSystem()
     validation: ValidationManager | None = None
-    version: str | None = None
+    version: AwesomeVersion | None = None
 
     @property
     def integration_dir(self) -> pathlib.Path:
@@ -593,7 +600,7 @@ class HacsBase:
             repository.data.id = repository_id
 
         else:
-            if self.hass is not None and ((check and repository.data.new) or self.status.new):
+            if self.hass is not None and check and repository.data.new:
                 self.async_dispatch(
                     HacsDispatchEvent.REPOSITORY,
                     {
@@ -690,11 +697,20 @@ class HacsBase:
 
         self.async_dispatch(HacsDispatchEvent.STATUS, {})
 
-    async def async_download_file(self, url: str, *, headers: dict | None = None) -> bytes | None:
+    async def async_download_file(
+        self,
+        url: str,
+        *,
+        headers: dict | None = None,
+        keep_url: bool = False,
+        nolog: bool = False,
+        **_,
+    ) -> bytes | None:
         """Download files, and return the content."""
         if url is None:
             return None
 
+        if not keep_url and "tags/" in url:
         mirrors = {
             "hacs.vip": {
                 "raw": "https://ghrp.hacs.vip/raw",
@@ -741,7 +757,7 @@ class HacsBase:
         tries_keys = list(mirrors.keys())
         tries_left = len(tries_keys) * 2
 
-        if "tags/" in url:
+        if not keep_url and "tags/" in url:
             url = url.replace("tags/", "")
 
         src = url.replace("//github.com/hacs/integration", "//github.com/hacs-china/integration")
@@ -759,7 +775,7 @@ class HacsBase:
             else:
                 url = url.replace("https://raw.githubusercontent.com/", f"{mirror['raw']}/")
 
-            self.log.debug("Downloading %s", url)
+            self.log.debug("Trying to download %s", url)
 
             try:
                 request = await self.session.get(
@@ -821,24 +837,24 @@ class HacsBase:
         for category in (HacsCategory.INTEGRATION, HacsCategory.PLUGIN):
             self.enable_hacs_category(HacsCategory(category))
 
-        if self.configuration.experimental and self.core.ha_version >= "2023.4.0b0":
+        if self.configuration.experimental:
             self.enable_hacs_category(HacsCategory.TEMPLATE)
 
-        if HacsCategory.PYTHON_SCRIPT in self.hass.config.components:
+        if (
+            HacsCategory.PYTHON_SCRIPT in self.hass.config.components
+            or self.repositories.category_downloaded(HacsCategory.PYTHON_SCRIPT)
+        ):
             self.enable_hacs_category(HacsCategory.PYTHON_SCRIPT)
 
-        if self.hass.services.has_service("frontend", "reload_themes"):
+        if self.hass.services.has_service(
+            "frontend", "reload_themes"
+        ) or self.repositories.category_downloaded(HacsCategory.THEME):
             self.enable_hacs_category(HacsCategory.THEME)
 
         if self.configuration.appdaemon:
             self.enable_hacs_category(HacsCategory.APPDAEMON)
         if self.configuration.netdaemon:
-            downloaded_netdaemon = [
-                x
-                for x in self.repositories.list_downloaded
-                if x.data.category == HacsCategory.NETDAEMON
-            ]
-            if len(downloaded_netdaemon) != 0:
+            if self.repositories.category_downloaded(HacsCategory.NETDAEMON):
                 self.log.warning(
                     "NetDaemon in HACS is deprectaded. It will stop working in the future. "
                     "Please remove all your current NetDaemon repositories from HACS "
@@ -929,15 +945,6 @@ class HacsBase:
                         repository.repository_manifest.update_data(
                             {**dict(HACS_MANIFEST_KEYS_TO_EXPORT), **manifest}
                         )
-                    self.async_dispatch(
-                        HacsDispatchEvent.REPOSITORY,
-                        {
-                            "id": 1337,
-                            "action": "update",
-                            "repository": repository.data.full_name,
-                            "repository_id": repository.data.id,
-                        },
-                    )
 
         if category == "integration":
             self.status.inital_fetch_done = True
@@ -953,6 +960,8 @@ class HacsBase:
                         "%s Unregister stale custom repository", repository.string
                     )
                     self.repositories.unregister(repository)
+
+        self.async_dispatch(HacsDispatchEvent.REPOSITORY, {})
 
     async def async_get_category_repositories(self, category: HacsCategory) -> None:
         """Get repositories from category."""

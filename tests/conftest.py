@@ -9,6 +9,8 @@ from unittest.mock import AsyncMock
 from aiogithubapi import GitHub, GitHubAPI
 from aiogithubapi.const import ACCEPT_HEADERS
 from awesomeversion import AwesomeVersion
+from homeassistant.auth.models import Credentials
+from homeassistant.auth.providers.homeassistant import HassAuthProvider
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import __version__ as HAVERSION
 from homeassistant.core import HomeAssistant
@@ -43,6 +45,8 @@ from custom_components.hacs.validate.manager import ValidationManager
 from tests.async_mock import MagicMock
 from tests.common import (
     TOKEN,
+    MockOwner,
+    WSClient,
     async_test_home_assistant,
     dummy_repository_base,
     mock_storage as mock_storage,
@@ -213,12 +217,39 @@ def repository_netdaemon(hacs):
 @pytest.fixture
 def config_entry() -> ConfigEntry:
     """Fixture for a config entry."""
-    yield ConfigEntry(
-        version=1,
-        domain=DOMAIN,
-        title="",
-        data={CONF_TOKEN: TOKEN},
-        source="user",
-        options={},
-        unique_id="12345",
+    args = {
+        "version": 1,
+        "domain": DOMAIN,
+        "title": "",
+        "data": {CONF_TOKEN: TOKEN},
+        "source": "user",
+        "options": {},
+        "unique_id": "12345",
+    }
+    # Core 2024.1 added minor_version
+    try:
+        return ConfigEntry(**{**args, "minor_version": 0})
+    except TypeError:
+        return ConfigEntry(**args)
+
+
+@pytest_asyncio.fixture
+async def ws_client(hacs: HacsBase, hass: HomeAssistant) -> WSClient:
+    """Owner authenticated Websocket client fixture."""
+    auth_provider = HassAuthProvider(hass, hass.auth._store, {"type": "homeassistant"})
+    hass.auth._providers[(auth_provider.type, auth_provider.id)] = auth_provider
+    owner = MockOwner.create(hass)
+
+    credentials = Credentials(
+        auth_provider_type=auth_provider.type,
+        auth_provider_id=auth_provider.id,
+        data={"username": "testadmin"},
     )
+
+    await auth_provider.async_initialize()
+    await hass.auth.async_link_user(owner, credentials)
+    refresh_token = await hass.auth.async_create_refresh_token(
+        owner, "https://hacs.xyz/testing", credential=credentials
+    )
+
+    return WSClient(hacs, hass.auth.async_create_access_token(refresh_token))
