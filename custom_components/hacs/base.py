@@ -37,7 +37,7 @@ from custom_components.hacs.repositories.base import (
     REPOSITORY_KEYS_TO_EXPORT,
 )
 
-from .const import DOMAIN, TV, URL_BASE
+from .const import DOMAIN, TV, URL_BASE, BASE_API_URL
 from .data_client import HacsDataClient
 from .enums import (
     ConfigurationType,
@@ -131,7 +131,7 @@ class HacsConfiguration:
     theme_path: str = "themes/"
     theme: bool = False
     token: str = None
-    github_api_base: str = ""
+    github_api_base: str = BASE_API_URL
 
     def to_json(self) -> str:
         """Return a json string."""

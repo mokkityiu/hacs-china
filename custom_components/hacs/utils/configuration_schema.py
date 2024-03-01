@@ -2,7 +2,7 @@
 # pylint: disable=dangerous-default-value
 import voluptuous as vol
 
-from ..const import LOCALE
+from ..const import LOCALE, BASE_API_URL
 
 # Configuration:
 TOKEN = "token"
@@ -21,6 +21,12 @@ EXPERIMENTAL = "experimental"
 
 # Config group
 PATH_OR_URL = "frontend_repo_path_or_url"
+
+GITHUB_APIS = {
+    'https://api.github.com': 'api.github.com (Github官方服务器)',
+    'https://ghapi.hacs.vip': 'ghapi.hacs.vip (极速版官方服务器)',
+    'https://ghapi-cf.hacs.vip/api': 'ghapi-cf.hacs.vip (Cloudflare)',
+}
 
 
 def hacs_base_config_schema(config: dict = {}) -> dict:
@@ -54,7 +60,8 @@ def hacs_config_option_schema(options: dict = {}) -> dict:
         vol.Optional(SIDEPANEL_ICON, default=options.get(SIDEPANEL_ICON)): str,
         vol.Optional(RELEASE_LIMIT, default=options.get(RELEASE_LIMIT)): int,
         vol.Optional(COUNTRY, default=options.get(COUNTRY)): vol.In(LOCALE),
-        vol.Optional("github_api_base", default=options.get("github_api_base", "")): str,
+        vol.Optional("github_api_base", default=options.get("github_api_base", BASE_API_URL)): vol.In(GITHUB_APIS),
+        vol.Optional("github_api_custom", default=options.get("github_api_custom")): str,
         vol.Optional(APPDAEMON, default=options.get(APPDAEMON)): bool,
         vol.Optional(NETDAEMON, default=options.get(NETDAEMON)): bool,
         vol.Optional(DEBUG, default=options.get(DEBUG)): bool,

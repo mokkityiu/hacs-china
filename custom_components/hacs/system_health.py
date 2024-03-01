@@ -1,10 +1,9 @@
 """Provide info to system health."""
-from aiogithubapi.common.const import BASE_API_URL
 from homeassistant.components import system_health
 from homeassistant.core import HomeAssistant, callback
 
 from .base import HacsBase
-from .const import DOMAIN
+from .const import DOMAIN, BASE_API_URL
 
 GITHUB_STATUS = "https://www.githubstatus.com/"
 CLOUDFLARE_STATUS = "https://www.cloudflarestatus.com/"
@@ -26,7 +25,7 @@ async def system_health_info(hass):
     data = {
         "GitHub API": system_health.async_check_can_reach_url(hass, api_url, api_url),
         "GitHub Content": system_health.async_check_can_reach_url(
-            hass, "https://raw.githubusercontent.com/hacs/integration/main/hacs.json"
+            hass, "https://ghrp.hacs.vip/raw/hacs/integration/main/hacs.json"
         ),
         "GitHub Web": system_health.async_check_can_reach_url(
             hass, "https://github.com/", GITHUB_STATUS

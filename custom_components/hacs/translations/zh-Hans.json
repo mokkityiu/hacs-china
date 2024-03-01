@@ -46,7 +46,8 @@
                     "netdaemon": "启用 NetDaemon 应用发现 & 追踪",
                     "sidepanel_icon": "侧边栏图标",
                     "sidepanel_title": "侧边栏标题",
-                    "github_api_base": "Github API根路径 (默认: https://api.github.com)"
+                    "github_api_base": "Github API 服务器",
+                    "github_api_custom": "自定义 Github API (如: https://ghapi.hacs.vip)"
                 }
             }
         }

@@ -52,7 +52,8 @@
                     "netdaemon": "[DEPRECATED] Enable NetDaemon apps discovery & tracking",
                     "sidepanel_icon": "Side panel icon",
                     "sidepanel_title": "Side panel title",
-                    "github_api_base": "Github API Base (default: https://api.github.com)"
+                    "github_api_base": "Github API Server",
+                    "github_api_custom": "Custom Github API (eg. https://api.github.com)"
                 }
             }
         }

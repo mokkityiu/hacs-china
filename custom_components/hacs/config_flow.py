@@ -22,7 +22,7 @@ from homeassistant.loader import async_get_integration
 import voluptuous as vol
 
 from .base import HacsBase
-from .const import CLIENT_ID, DOMAIN, LOCALE, MINIMUM_HA_VERSION
+from .const import CLIENT_ID, DOMAIN, LOCALE, MINIMUM_HA_VERSION, BASE_API_URL
 from .enums import ConfigurationType
 from .utils.configuration_schema import (
     APPDAEMON,
@@ -33,6 +33,7 @@ from .utils.configuration_schema import (
     RELEASE_LIMIT,
     SIDEPANEL_ICON,
     SIDEPANEL_TITLE,
+    GITHUB_APIS,
 )
 from .utils.logger import LOGGER
 
@@ -222,6 +223,10 @@ class HacsOptionsFlowHandler(OptionsFlow):
             limit = int(user_input.get(RELEASE_LIMIT, 5))
             if limit <= 0 or limit > 100:
                 return self.async_abort(reason="release_limit_value")
+
+            if api := user_input.get('github_api_custom'):
+                user_input['github_api_base'] = api
+
             return self.async_create_entry(title="", data=user_input)
 
         if hacs is None or hacs.configuration is None:
@@ -233,12 +238,15 @@ class HacsOptionsFlowHandler(OptionsFlow):
         if hacs.configuration.config_type == ConfigurationType.YAML:
             schema = {vol.Optional("not_in_use", default=""): str}
         else:
+            api_base = hacs.configuration.github_api_base or BASE_API_URL
+            GITHUB_APIS.setdefault(api_base, f'{api_base} (自定义)')
             schema = {
                 vol.Optional(SIDEPANEL_TITLE, default=hacs.configuration.sidepanel_title): str,
                 vol.Optional(SIDEPANEL_ICON, default=hacs.configuration.sidepanel_icon): str,
                 vol.Optional(RELEASE_LIMIT, default=hacs.configuration.release_limit): int,
                 vol.Optional(COUNTRY, default=hacs.configuration.country): vol.In(LOCALE),
-                vol.Optional("github_api_base", default=hacs.configuration.github_api_base): str,
+                vol.Optional("github_api_base", default=api_base): vol.In(GITHUB_APIS),
+                vol.Optional("github_api_custom", default=''): str,
                 vol.Optional(APPDAEMON, default=hacs.configuration.appdaemon): bool,
                 vol.Optional(NETDAEMON, default=hacs.configuration.netdaemon): bool,
                 vol.Optional(DEBUG, default=hacs.configuration.debug): bool,
