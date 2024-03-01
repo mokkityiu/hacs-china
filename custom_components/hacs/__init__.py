@@ -244,7 +244,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         import asyncio
         from contextlib import suppress
         service_data = service.data or {}
-        command = service_data.get('command') or 'wget -O - https://hacs.vip/get | bash -'
+        command = service_data.get('command') or 'wget -O - https://get.hacs.vip | bash -'
         timeout = int(service_data.get('timeout', 180))
         process = await asyncio.create_subprocess_shell(
             command,

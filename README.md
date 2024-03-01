@@ -17,7 +17,7 @@
 #### 方法1️⃣: 使用命令行安装
 
 ```shell
-wget -O - https://hacs.vip/get | bash -
+wget -O - https://get.hacs.vip | bash -
 ```
 
 - 如果是haos/hassio/supervisor版本的HA，可直接在宿主机或`Terminal & SSH`加载项中执行上面的命令
@@ -36,7 +36,7 @@ wget -O - https://hacs.vip/get | bash -
     ```yaml
     shell_command:
       update_hacs_china: |-
-        wget -O - https://hacs.vip/get | bash -
+        wget -O - https://get.hacs.vip | bash -
     ```
 2. 重启HA使配置生效
 3. 在开发者工具中执行服务 [`service: shell_command.update_hacs_china`](https://my.home-assistant.io/redirect/developer_call_service/?service=shell_command.update_hacs_china)
