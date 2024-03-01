@@ -43,7 +43,7 @@ async def system_health_info(hass):
 
     if hacs.configuration.experimental:
         data["HACS Data"] = system_health.async_check_can_reach_url(
-            hass, "https://data-v2.hacs.xyz/data.json", CLOUDFLARE_STATUS
+            hass, "https://data-v2.hacs.vip/data.json", CLOUDFLARE_STATUS
         )
 
     return data
