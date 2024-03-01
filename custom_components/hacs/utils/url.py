@@ -13,7 +13,7 @@ def github_release_asset(
     **_,
 ) -> str:
     """Generate a download URL for a release asset."""
-    return f"https://ghrp.hacs.vip/{repository}/releases/download/{version}/{filename}"
+    return f"https://github.com/{repository}/releases/download/{version}/{filename}"
 
 
 def github_archive(
@@ -25,5 +25,5 @@ def github_archive(
 ) -> str:
     """Generate a download URL for a repository zip."""
     if GIT_SHA.match(version):
-        return f"https://ghrp.hacs.vip/{repository}/archive/{version}.zip"
-    return f"https://ghrp.hacs.vip/{repository}/archive/refs/{variant}/{version}.zip"
+        return f"https://github.com/{repository}/archive/{version}.zip"
+    return f"https://github.com/{repository}/archive/refs/{variant}/{version}.zip"

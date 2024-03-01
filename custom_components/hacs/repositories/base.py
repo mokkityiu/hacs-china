@@ -1351,7 +1351,7 @@ class HacsRepository:
             return None
 
         result = await self.hacs.async_download_file(
-            f"https://ghrp.hacs.vip/raw/{self.data.full_name}/{version}/{filename}",
+            f"https://raw.githubusercontent.com/{self.data.full_name}/{version}/{filename}",
             nolog=True,
         )
 
@@ -1372,7 +1372,7 @@ class HacsRepository:
         self.logger.debug("%s Getting hacs.json for version=%s", self.string, version)
         try:
             result = await self.hacs.async_download_file(
-                f"https://ghrp.hacs.vip/raw/{self.data.full_name}/{version}/hacs.json",
+                f"https://raw.githubusercontent.com/{self.data.full_name}/{version}/hacs.json",
                 nolog=True,
             )
             if result is None:
