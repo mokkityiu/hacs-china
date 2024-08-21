@@ -8,16 +8,18 @@ __pycache__
 
 # misc
 .coverage
+.python-version
+.venv
 .vscode
 coverage.xml
 htmlcov
 outputdata
 settings.json
+venv
 
 
 # Frontend are downloaded on release
 custom_components/hacs/hacs_frontend
-custom_components/hacs/hacs_frontend_experimental
 
 # Translation files
 custom_components/hacs/translations

@@ -10,10 +10,8 @@ from custom_components.hacs.utils.queue_manager import QueueManager
 dummy_task = AsyncMock()
 
 
-@pytest.mark.asyncio
 async def test_queue_manager(hacs: HacsBase, caplog: pytest.LogCaptureFixture) -> None:
     """Test the queue manager."""
-
     queue_manager = QueueManager(hass=hacs.hass)
     assert not queue_manager.running
     assert not queue_manager.has_pending_tasks

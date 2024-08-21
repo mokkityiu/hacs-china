@@ -1,8 +1,9 @@
--r requirements_base.txt
-aresponses==2.1.6
+--requirement requirements_base.txt
 asynctest==0.13.0
-homeassistant
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-cov==4.1.0
-pytest-socket==0.6.0
+freezegun==1.5.1
+pytest==8.3.2
+pytest-asyncio==0.23.8
+pytest-cov==5.0.0
+pytest-snapshot==0.9.0
+pytest-socket==0.7.0
+RestrictedPython==7.2

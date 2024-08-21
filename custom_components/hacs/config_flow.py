@@ -1,4 +1,5 @@
 """Adds config flow for HACS."""
+
 from __future__ import annotations
 
 import asyncio
@@ -23,14 +24,9 @@ import voluptuous as vol
 
 from .base import HacsBase
 from .const import CLIENT_ID, DOMAIN, LOCALE, MINIMUM_HA_VERSION, BASE_API_URL
-from .enums import ConfigurationType
 from .utils.configuration_schema import (
     APPDAEMON,
     COUNTRY,
-    DEBUG,
-    EXPERIMENTAL,
-    NETDAEMON,
-    RELEASE_LIMIT,
     SIDEPANEL_ICON,
     SIDEPANEL_TITLE,
     GITHUB_APIS,
@@ -76,14 +72,8 @@ class HacsFlowHandler(ConfigFlow, domain=DOMAIN):
 
             return await self.async_step_device(user_input)
 
-        ## Initial form
+        # Initial form
         return await self._show_config_form(user_input)
-
-    @callback
-    def async_remove(self):
-        """Cleanup."""
-        if self.activation_task and not self.activation_task.done():
-            self.activation_task.cancel()
 
     async def async_step_device(self, _user_input):
         """Handle device steps."""
@@ -97,8 +87,6 @@ class HacsFlowHandler(ConfigFlow, domain=DOMAIN):
                 async def _progress():
                     with suppress(UnknownFlow):
                         await self.hass.config_entries.flow.async_configure(flow_id=self.flow_id)
-
-                self.hass.async_create_task(_progress())
 
         if not self.device:
             integration = await async_get_integration(self.hass, DOMAIN)
@@ -123,14 +111,16 @@ class HacsFlowHandler(ConfigFlow, domain=DOMAIN):
                 return self.async_show_progress_done(next_step_id="could_not_register")
             return self.async_show_progress_done(next_step_id="device_done")
 
-        return self.async_show_progress(
-            step_id="device",
-            progress_action="wait_for_device",
-            description_placeholders={
+        show_progress_kwargs = {
+            "step_id": "device",
+            "progress_action": "wait_for_device",
+            "description_placeholders": {
                 "url": OAUTH_USER_LOGIN,
                 "code": self._registration.user_code,
             },
-        )
+            "progress_task": self.activation_task,
+        }
+        return self.async_show_progress(**show_progress_kwargs)
 
     async def _show_config_form(self, user_input):
         """Show the configuration form to edit location data."""
@@ -153,9 +143,6 @@ class HacsFlowHandler(ConfigFlow, domain=DOMAIN):
                         "acc_untested", default=user_input.get("acc_untested", False)
                     ): bool,
                     vol.Required("acc_disable", default=user_input.get("acc_disable", False)): bool,
-                    vol.Optional(
-                        "experimental", default=user_input.get("experimental", True)
-                    ): bool,
                 }
             ),
             errors=self._errors,
@@ -177,7 +164,7 @@ class HacsFlowHandler(ConfigFlow, domain=DOMAIN):
                 "token": self._activation.access_token,
             },
             options={
-                "experimental": self._user_input.get("experimental", True),
+                "experimental": True,
             },
         )
 
@@ -220,14 +207,9 @@ class HacsOptionsFlowHandler(OptionsFlow):
         """Handle a flow initialized by the user."""
         hacs: HacsBase = self.hass.data.get(DOMAIN)
         if user_input is not None:
-            limit = int(user_input.get(RELEASE_LIMIT, 5))
-            if limit <= 0 or limit > 100:
-                return self.async_abort(reason="release_limit_value")
-
             if api := user_input.get('github_api_custom'):
                 user_input['github_api_base'] = api
-
-            return self.async_create_entry(title="", data=user_input)
+            return self.async_create_entry(title="", data={**user_input, "experimental": True})
 
         if hacs is None or hacs.configuration is None:
             return self.async_abort(reason="not_setup")
@@ -235,22 +217,15 @@ class HacsOptionsFlowHandler(OptionsFlow):
         if hacs.queue.has_pending_tasks:
             return self.async_abort(reason="pending_tasks")
 
-        if hacs.configuration.config_type == ConfigurationType.YAML:
-            schema = {vol.Optional("not_in_use", default=""): str}
-        else:
-            api_base = hacs.configuration.github_api_base or BASE_API_URL
-            GITHUB_APIS.setdefault(api_base, f'{api_base} (自定义)')
-            schema = {
-                vol.Optional(SIDEPANEL_TITLE, default=hacs.configuration.sidepanel_title): str,
-                vol.Optional(SIDEPANEL_ICON, default=hacs.configuration.sidepanel_icon): str,
-                vol.Optional(RELEASE_LIMIT, default=hacs.configuration.release_limit): int,
-                vol.Optional(COUNTRY, default=hacs.configuration.country): vol.In(LOCALE),
+        api_base = hacs.configuration.github_api_base or BASE_API_URL
+        GITHUB_APIS.setdefault(api_base, f'{api_base} (自定义)')
+        schema = {
+            vol.Optional(SIDEPANEL_TITLE, default=hacs.configuration.sidepanel_title): str,
+            vol.Optional(SIDEPANEL_ICON, default=hacs.configuration.sidepanel_icon): str,
+            vol.Optional(COUNTRY, default=hacs.configuration.country): vol.In(LOCALE),
                 vol.Optional("github_api_base", default=api_base): vol.In(GITHUB_APIS),
                 vol.Optional("github_api_custom", default=''): str,
-                vol.Optional(APPDAEMON, default=hacs.configuration.appdaemon): bool,
-                vol.Optional(NETDAEMON, default=hacs.configuration.netdaemon): bool,
-                vol.Optional(DEBUG, default=hacs.configuration.debug): bool,
-                vol.Optional(EXPERIMENTAL, default=hacs.configuration.experimental): bool,
-            }
+            vol.Optional(APPDAEMON, default=hacs.configuration.appdaemon): bool,
+        }
 
         return self.async_show_form(step_id="user", data_schema=vol.Schema(schema))

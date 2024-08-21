@@ -14,10 +14,8 @@ from custom_components.hacs.utils.store import (
 )
 
 
-@pytest.mark.asyncio
 async def test_store_load(hass: HomeAssistant) -> None:
     """Test the store load."""
-
     store = get_store_for_key(hass, "test")
 
     with patch(
@@ -32,17 +30,15 @@ async def test_store_load(hass: HomeAssistant) -> None:
 
     with pytest.raises(HacsException):
         with patch(
-            "custom_components.hacs.utils.store.json_util.load_json", side_effect=OSError("No file")
+            "custom_components.hacs.utils.store.json_util.load_json", side_effect=OSError("No file"),
         ):
             assert store.load() == {"test": "test"}
 
 
-@pytest.mark.asyncio
 async def test_store_remove(hass: HomeAssistant) -> None:
     """Test the store remove."""
-
     with patch(
-        "custom_components.hacs.utils.store.HACSStore.async_remove", return_value=AsyncMock()
+        "custom_components.hacs.utils.store.HACSStore.async_remove", return_value=AsyncMock(),
     ) as async_remove_mock:
         await async_remove_store(hass, "test")
         assert not async_remove_mock.called
@@ -51,12 +47,10 @@ async def test_store_remove(hass: HomeAssistant) -> None:
         assert async_remove_mock.called
 
 
-@pytest.mark.asyncio
 async def test_store_store(hass: HomeAssistant, caplog: pytest.LogCaptureFixture) -> None:
     """Test the store store."""
-
     with patch(
-        "custom_components.hacs.utils.store.HACSStore.async_save", return_value=AsyncMock()
+        "custom_components.hacs.utils.store.HACSStore.async_save", return_value=AsyncMock(),
     ) as async_save_mock, patch(
         "custom_components.hacs.utils.store.json_util.load_json",
         return_value={"version": VERSION_STORAGE, "data": {}},

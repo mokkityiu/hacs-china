@@ -1,4 +1,5 @@
 """Validate a GitHub repository to be used with HACS."""
+
 from __future__ import annotations
 
 import asyncio
@@ -33,7 +34,6 @@ CATEGORY = os.getenv("CATEGORY", os.getenv("INPUT_CATEGORY", ""))
 CATEGORIES = [
     "appdaemon",
     "integration",
-    "netdaemon",
     "plugin",
     "python_script",
     "template",
@@ -59,14 +59,14 @@ def get_event_data():
         return json.loads(ev.read())
 
 
-async def chose_repository(githubapi: GitHubAPI, category: str):
+async def choose_repository(githubapi: GitHubAPI, category: str):
     if category is None:
-        return
+        return None
 
     response = await githubapi.repos.contents.get(HacsGitHubRepo.DEFAULT, category)
     current = json.loads(decode_content(response.data.content))
 
-    with open(f"{GITHUB_WORKSPACE}/{category}") as cat_file:
+    with open(f"{GITHUB_WORKSPACE}/{category}") as cat_file:  # noqa: ASYNC230
         new = json.loads(cat_file.read())
 
     for repo in current:
@@ -79,7 +79,7 @@ async def chose_repository(githubapi: GitHubAPI, category: str):
     return new[0]
 
 
-def chose_category():
+def choose_category():
     for name in CHANGED_FILES.split(" "):
         if name in CATEGORIES:
             return name
@@ -91,10 +91,7 @@ async def preflight():
     ref: str | None = None
 
     hacs = HacsBase()
-    try:
-        hacs.hass = HomeAssistant()  # pylint: disable=no-value-for-parameter
-    except TypeError:
-        hacs.hass = HomeAssistant("")  # pylint: disable=too-many-function-args
+    hacs.hass = HomeAssistant("")
 
     hacs.system.action = True
     hacs.configuration.token = TOKEN
@@ -106,15 +103,15 @@ async def preflight():
         hacs.githubapi = GitHubAPI(
             token=hacs.configuration.token,
             session=session,
-            **{"client_name": "HACS/Action"},
+            client_name="HACS/Action",
         )
 
         if REPOSITORY and CATEGORY:
             repository = REPOSITORY
             category = CATEGORY
         elif GITHUB_REPOSITORY == HacsGitHubRepo.DEFAULT:
-            category = chose_category()
-            repository = await chose_repository(hacs.githubapi, category)
+            category = choose_category()
+            repository = await choose_repository(hacs.githubapi, category)
             LOGGER.info(f"Actor: {GITHUB_ACTOR}")
         else:
             category = CATEGORY.lower()
@@ -144,6 +141,9 @@ async def preflight():
         if category is None:
             error("No category found, use env CATEGORY to set this.")
 
+        if category not in CATEGORIES:
+            error(f"Category {category} is not valid.")
+
         if ref is None and GITHUB_REPOSITORY != HacsGitHubRepo.DEFAULT:
             repo = await hacs.githubapi.repos.get(repository)
             ref = repo.data.default_branch
@@ -153,8 +153,7 @@ async def preflight():
 
 async def validate_repository(hacs, repository, category, ref=None):
     """Validate."""
-
-    ## Legacy GitHub client
+    # Legacy GitHub client
     hacs.github = GitHub(
         hacs.configuration.token,
         hacs.session,
@@ -163,10 +162,13 @@ async def validate_repository(hacs, repository, category, ref=None):
 
     try:
         await hacs.async_register_repository(
-            repository_full_name=repository, category=category, ref=ref
+            repository_full_name=repository,
+            category=category,
+            ref=ref,
         )
     except HacsException as exception:
         error(exception)
 
 
-asyncio.run(preflight())
+if __name__ == "__main__":
+    asyncio.run(preflight())
