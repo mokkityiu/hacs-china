@@ -201,7 +201,6 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             async with asyncio.timeout(timeout):
                 stdout_data, stderr_data = await process.communicate()
         except asyncio.TimeoutError:
-            LOGGER.error("Timed out running command: `%s`, after: %ss", command, timeout)
             if process:
                 with suppress(TypeError):
                     process.kill()
@@ -209,7 +208,11 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                     # pylint: disable-next=protected-access
                     process._transport.close()  # type: ignore[attr-defined]
                 del process
-            raise
+            return {
+                "error": "Timed out running command",
+                "command": command,
+                "timeout": timeout,
+            }
         if service.return_response:
             stdout = ''
             stderr = ''
@@ -224,11 +227,17 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                     "stdout": stdout,
                     "stderr": stderr,
                 }
-            except UnicodeDecodeError:
-                LOGGER.exception("Unable to handle non-utf8 output of command: `%s`", command)
-                raise
+            except UnicodeDecodeError as exc:
+                return {
+                    "error": str(exc),
+                    "command": command,
+                }
         if process.returncode != 0:
-            LOGGER.exception("Error running command: `%s`, return code: %s", command, process.returncode)
+            return {
+                "error": "Error running command",
+                "command": command,
+                "returncode": process.returncode,
+            }
         return None
 
     from homeassistant.core import SupportsResponse
@@ -286,6 +295,5 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
 
 async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
     """Reload the HACS config entry."""
-    if not await async_unload_entry(hass, config_entry):
-        return
+    await async_unload_entry(hass, config_entry)
     await async_setup_entry(hass, config_entry)

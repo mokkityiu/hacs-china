@@ -223,8 +223,8 @@ class HacsOptionsFlowHandler(OptionsFlow):
             vol.Optional(SIDEPANEL_TITLE, default=hacs.configuration.sidepanel_title): str,
             vol.Optional(SIDEPANEL_ICON, default=hacs.configuration.sidepanel_icon): str,
             vol.Optional(COUNTRY, default=hacs.configuration.country): vol.In(LOCALE),
-                vol.Optional("github_api_base", default=api_base): vol.In(GITHUB_APIS),
-                vol.Optional("github_api_custom", default=''): str,
+            vol.Optional("github_api_base", default=api_base): vol.In(GITHUB_APIS),
+            vol.Optional("github_api_custom", default=''): str,
             vol.Optional(APPDAEMON, default=hacs.configuration.appdaemon): bool,
         }
 
