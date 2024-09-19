@@ -20,17 +20,26 @@
 wget -O - https://get.hacs.vip | bash -
 ```
 
-- 如果是haos/hassio/supervisor版本的HA，可直接在宿主机或`Terminal & SSH`加载项中执行上面的命令
+- 如果是haos/hassio/supervised版本的HA，可直接在宿主机或`Terminal & SSH`加载项中执行上面的命令
 - 如果是core/docker版本的HA，需要ssh登陆宿主机后，并cd进入到HA配置目录再执行安装命令
 
-#### 方法2️⃣: [`upgrade`](https://my.home-assistant.io/redirect/developer_call_service/?service=hacs.upgrade)服务
+#### 方法2️⃣: [`加载项安装器: https://hacs.vip/get-addon`](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgitee.com%2Fhacs-china%2Faddons)
 
-> 需要HACS极速版v1.33.0.3版本及以上
+> 需要HAOS或Supervised版本的HA
+
+1. 添加加载项仓库 [`https://gitee.com/hacs-china/addons`](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgitee.com%2Fhacs-china%2Faddons)
+2. 找到`HACS极速版安装器`并安装加载项
+3. 启动加载项并观察日志
+4. 重启HA
+
+#### 方法3️⃣: [`upgrade`](https://my.home-assistant.io/redirect/developer_call_service/?service=hacs.upgrade)服务
+
+> 需要已安装HACS极速版v1.33.0.3版本及以上
 
 1. 在开发者工具中执行服务 [`service: hacs.upgrade`](https://my.home-assistant.io/redirect/developer_call_service/?service=hacs.upgrade)
 2. 重启HA使更新后的HACS生效
 
-#### 方法3️⃣: [`shell_command`](https://my.home-assistant.io/redirect/developer_call_service/?service=shell_command.update_hacs_china)服务
+#### 方法4️⃣: [`shell_command`](https://my.home-assistant.io/redirect/developer_call_service/?service=shell_command.update_hacs_china)服务
 
 1. 复制代码到HA配置文件 `configuration.yaml`
     ```yaml
@@ -39,10 +48,10 @@ wget -O - https://get.hacs.vip | bash -
         wget -O - https://get.hacs.vip | bash -
     ```
 2. 重启HA使配置生效
-3. 在开发者工具中执行服务 [`service: shell_command.update_hacs_china`](https://my.home-assistant.io/redirect/developer_call_service/?service=shell_command.update_hacs_china)
+3. 在开发者工具中执行动作 [`action: shell_command.update_hacs_china`](https://my.home-assistant.io/redirect/developer_call_service/?service=shell_command.update_hacs_china)
 4. 再次重启HA使更新后的HACS生效
 
-#### 方法4️⃣: 手动安装
+#### 方法5️⃣: 手动安装
 
 - [点击这里下载](https://github.com/hacs-china/integration/releases/latest/download/hacs.zip)安装包并解压 (如果下载不了请点[这里](https://ghproxy.com/github.com/hacs-china/integration/releases/latest/download/hacs.zip)或[这里](https://hub.fastgit.xyz/hacs-china/integration/releases/latest/download/hacs.zip))
 - 通过samba/ftp进入HA配置目录，通常为以下目录：
