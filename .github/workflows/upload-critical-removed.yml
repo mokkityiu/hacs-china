@@ -47,7 +47,7 @@ jobs:
           jq -c . outputdata/${{ matrix.category }}/repositories.json
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: steps.updated.outputs.updated == 'true'
         with:
           name: ${{ matrix.category }}
